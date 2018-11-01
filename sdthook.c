@@ -37,7 +37,7 @@ asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
 {
 	int ret;
     char buf[0x100]={0};
-    printk(KERN_ALERT "[+] open() hooked.");	
+    printk(KERN_INFO"[+] open() hooked.");	
     if( pathname == NULL ) return -1;
     printk("Open Intercepted : %lx\n", (unsigned long)pathname);
     // To secure from crash (SMAP protect)
@@ -59,18 +59,20 @@ static int __init audit_init(void)
     printk("Hello kernel.\n");
     orig_cr0 = clear_and_return_cr0();
     printk("Info: orig_cr0 %lx\n",(unsigned long)orig_cr0);
-    printk("test.\n");
 	sys_call_table = get_sys_call_table();
 	printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
-	//Hook Sys Call Open
+	
+    //Hook Sys Call Open
 	orig_open   = (void*)sys_call_table[__NR_open];
     printk("Info: orig_open at %lx\n",(unsigned long) orig_open);
     printk("Info: hacked_open at %lx\n",(unsigned long) &hacked_open);
+    
     // It seems that change the 16bit of CR0 on x86_64 platform won't work.
     // No no, CR0 can work. But I still don't understand why define sys_call_table as unsigned long* and it will work?
     sys_call_table[__NR_open] = (unsigned long)&hacked_open;
 	setback_cr0(orig_cr0);
-	//Initialize Netlink
+	
+    //Initialize Netlink
 	netlink_init();
 	return 0;
 }
