@@ -36,9 +36,13 @@ asmlinkage int (* orig_open)(const char *pathname, int flags, mode_t mode);
 asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
 {
 	int ret;
+    char buf[0x100]={0};
     printk(KERN_ALERT "[+] open() hooked.");	
     if( pathname == NULL ) return -1;
     printk("Open Intercepted : %lx\n", (unsigned long)pathname);
+    // To secure from crash (SMAP protect)
+    copy_from_user(buf,pathname,0x100);
+    printk("pathname : %s\n",buf);
 	ret = orig_open(pathname, flags, mode);
   	//AuditOpen(pathname,flags,ret);
   	return ret; 
