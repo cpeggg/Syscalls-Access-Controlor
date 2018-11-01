@@ -1,6 +1,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/kallsyms.h>
 
 #ifdef _X86_
 struct idt_descriptor
@@ -19,6 +20,7 @@ struct idt_descriptor
     unsigned int off_high;
 };
 #endif
+#ifdef _X86_
 void *get_system_call(void)
 {
    unsigned char idtr[6];
@@ -27,14 +29,12 @@ void *get_system_call(void)
    asm ("sidt %0" : "=m" (idtr));
    base = *((unsigned long *) &idtr[2]);
    memcpy(&desc, (void *) (base + (0x80*8)), sizeof(desc));
-#ifdef _X86_
    return((void*)(((int)desc.off_high << 16) + desc.off_low));
-#else
-   return((void*)(((long)desc.off_high << 32) + desc.off_low));
-#endif
 }
+#endif
 void *get_sys_call_table(void)
 {
+#ifdef _X86_
     void *system_call = get_system_call();
     unsigned char *p;
     unsigned long sct;
@@ -53,6 +53,12 @@ void *get_sys_call_table(void)
          }
 	else     sct = 0;
    return((void *) sct);
+#else
+   static unsigned long *p_sys_call_table;
+   /* Aquire system calls table address */
+   p_sys_call_table = (unsigned long *) kallsyms_lookup_name("sys_call_table");
+   return p_sys_call_table;
+#endif
 } 
 
 // clear WP bit of CR0, and return the original value

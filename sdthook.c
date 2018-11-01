@@ -46,20 +46,26 @@ asmlinkage long hacked_open(const char *pathname, int flags, mode_t mode)
 
 static int __init audit_init(void)
 {
-    printk("Hello, Kernel!\n");
 #ifdef _X86_
-	unsigned int orig_cr0 = clear_and_return_cr0();
+	unsigned int orig_cr0;
 #else
-    //unsigned long orig_cr0 = clear_and_return_cr0();
+    unsigned long orig_cr0;
 #endif
-	//sys_call_table = get_sys_call_table();
-	//printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
+    printk("Hello kernel.\n");
+    orig_cr0 = clear_and_return_cr0();
+    printk("Info: orig_cr0 %lx\n",(unsigned long)orig_cr0);
+    printk("test.\n");
+	sys_call_table = get_sys_call_table();
+	printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
 	//Hook Sys Call Open
-	//orig_open   = sys_call_table[__NR_open];
-	//sys_call_table[__NR_open]   = hacked_open;
-	//setback_cr0(orig_cr0);
+	orig_open   = sys_call_table[__NR_open];
+    printk("Info: orig_open at %lx\n",(unsigned long) orig_open);
+    printk("Info: hacked_open at %lx\n",(unsigned long) hacked_open);
+    // It seems that change the 16bit of CR0 on x86_64 platform won't work.
+    //sys_call_table[__NR_open] = hacked_open;
+	setback_cr0(orig_cr0);
 	//Initialize Netlink
-	//netlink_init();
+	netlink_init();
 	return 0;
 }
 
@@ -67,10 +73,11 @@ static int __init audit_init(void)
 static void __exit audit_exit(void)
 {
 #ifdef _X86_
-	unsigned int orig_cr0 = clear_and_return_cr0();
+	unsigned int orig_cr0;
 #else
-    unsigned long orig_cr0 = clear_and_return_cr0();
+    unsigned long orig_cr0;
 #endif
+    orig_cr0 = clear_and_return_cr0();
 	sys_call_table[__NR_open] = orig_open;
 	setback_cr0(orig_cr0);
  	netlink_release();  	
