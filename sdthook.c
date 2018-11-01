@@ -30,16 +30,17 @@ void setback_cr0(unsigned int val);
 unsigned long clear_and_return_cr0(void);
 void setback_cr0(unsigned long val);
 #endif
-void **sys_call_table;
-asmlinkage long (* orig_open)(const char *pathname, int flags, mode_t mode);
+unsigned long * sys_call_table=NULL;
+asmlinkage int (* orig_open)(const char *pathname, int flags, mode_t mode);
 
-asmlinkage long hacked_open(const char *pathname, int flags, mode_t mode)
+asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
 {
-	long ret;
-  	if( pathname == NULL ) return -1;
-    printk("Open Intercepted : %s \n", pathname);
+	int ret;
+    printk(KERN_ALERT "[+] open() hooked.");	
+    //if( pathname == NULL ) return -1;
+    //printk("Open Intercepted : %s \n", pathname);
 	ret = orig_open(pathname, flags, mode);
-  	AuditOpen(pathname,flags,ret);
+  	//AuditOpen(pathname,flags,ret);
   	return ret; 
 }
   
@@ -56,13 +57,14 @@ static int __init audit_init(void)
     printk("Info: orig_cr0 %lx\n",(unsigned long)orig_cr0);
     printk("test.\n");
 	sys_call_table = get_sys_call_table();
-	printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
+	printk("Info: sys_call_table found at %p\n",sys_call_table) ;
 	//Hook Sys Call Open
-	orig_open   = sys_call_table[__NR_open];
+	orig_open   = (void*)sys_call_table[__NR_open];
     printk("Info: orig_open at %lx\n",(unsigned long) orig_open);
-    printk("Info: hacked_open at %lx\n",(unsigned long) hacked_open);
+    printk("Info: hacked_open at %lx\n",(unsigned long) &hacked_open);
     // It seems that change the 16bit of CR0 on x86_64 platform won't work.
-    //sys_call_table[__NR_open] = hacked_open;
+    // No no, CR0 can work. But I still don't understand why define sys_call_table as unsigned long* and it will work?
+    sys_call_table[__NR_open] = (unsigned long)&hacked_open;
 	setback_cr0(orig_cr0);
 	//Initialize Netlink
 	netlink_init();
@@ -78,7 +80,7 @@ static void __exit audit_exit(void)
     unsigned long orig_cr0;
 #endif
     orig_cr0 = clear_and_return_cr0();
-	sys_call_table[__NR_open] = orig_open;
+	sys_call_table[__NR_open] = (unsigned long)orig_open;
 	setback_cr0(orig_cr0);
  	netlink_release();  	
     printk(KERN_INFO "Module exit.\n");

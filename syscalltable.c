@@ -75,7 +75,7 @@ unsigned int clear_and_return_cr0(void)
     unsigned long ret=0;
     unsigned long cr0=read_cr0();
     ret = cr0;
-    cr0 &= 0xfffffffffffeffff;
+    cr0 &= (~0x10000);
     write_cr0(cr0);
     //_disable();
     asm("cli;");
