@@ -12,7 +12,7 @@
 #include <linux/mm.h>
 #include <linux/sched.h>
 #include <linux/unistd.h>
-
+#define MAX_LENGTH 256
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("cpegg");
 MODULE_DESCRIPTION("A simple example Linux module leart from Robert W. Oliver II");
@@ -36,15 +36,15 @@ asmlinkage int (* orig_open)(const char *pathname, int flags, mode_t mode);
 asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
 {
 	int ret;
-    char buf[0x100]={0};
+    char buf[MAX_LENGTH]={0};
     printk(KERN_INFO"[+] open() hooked.");	
     if( pathname == NULL ) return -1;
     printk("Open Intercepted : %lx\n", (unsigned long)pathname);
     // To secure from crash (SMAP protect)
-    copy_from_user(buf,pathname,0x100);
+    copy_from_user(buf,pathname,MAX_LENGTH);
     printk("pathname : %s\n",buf);
 	ret = orig_open(pathname, flags, mode);
-  	//AuditOpen(pathname,flags,ret);
+  	AuditOpen(buf,flags,ret);
   	return ret; 
 }
   
