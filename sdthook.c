@@ -37,8 +37,8 @@ asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
 {
 	int ret;
     printk(KERN_ALERT "[+] open() hooked.");	
-    //if( pathname == NULL ) return -1;
-    //printk("Open Intercepted : %s \n", pathname);
+    if( pathname == NULL ) return -1;
+    printk("Open Intercepted : %lx\n", (unsigned long)pathname);
 	ret = orig_open(pathname, flags, mode);
   	//AuditOpen(pathname,flags,ret);
   	return ret; 
@@ -57,7 +57,7 @@ static int __init audit_init(void)
     printk("Info: orig_cr0 %lx\n",(unsigned long)orig_cr0);
     printk("test.\n");
 	sys_call_table = get_sys_call_table();
-	printk("Info: sys_call_table found at %p\n",sys_call_table) ;
+	printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
 	//Hook Sys Call Open
 	orig_open   = (void*)sys_call_table[__NR_open];
     printk("Info: orig_open at %lx\n",(unsigned long) orig_open);
