@@ -13,6 +13,11 @@
 #include <linux/sched.h>
 #include <linux/unistd.h>
 
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("cpegg");
+MODULE_DESCRIPTION("A simple example Linux module leart from Robert W. Oliver II");
+MODULE_VERSION("0.01");
+
 void netlink_release(void);
 void netlink_init(void);
 int AuditOpen(const char *pathname, int flags, int ret);
@@ -41,19 +46,20 @@ asmlinkage long hacked_open(const char *pathname, int flags, mode_t mode)
 
 static int __init audit_init(void)
 {
+    printk("Hello, Kernel!\n");
 #ifdef _X86_
 	unsigned int orig_cr0 = clear_and_return_cr0();
 #else
-    unsigned long orig_cr0 = clear_and_return_cr0();
+    //unsigned long orig_cr0 = clear_and_return_cr0();
 #endif
-	sys_call_table = get_sys_call_table();
-	printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
+	//sys_call_table = get_sys_call_table();
+	//printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
 	//Hook Sys Call Open
-	orig_open   = sys_call_table[__NR_open];
-	sys_call_table[__NR_open]   = hacked_open;
-	setback_cr0(orig_cr0);
+	//orig_open   = sys_call_table[__NR_open];
+	//sys_call_table[__NR_open]   = hacked_open;
+	//setback_cr0(orig_cr0);
 	//Initialize Netlink
-	netlink_init();
+	//netlink_init();
 	return 0;
 }
 
@@ -68,7 +74,7 @@ static void __exit audit_exit(void)
 	sys_call_table[__NR_open] = orig_open;
 	setback_cr0(orig_cr0);
  	netlink_release();  	
+    printk(KERN_INFO "Module exit.\n");
 }
-MODULE_LICENSE("Dual BSD/GPL");
 module_init(audit_init);
 module_exit(audit_exit);
