@@ -74,24 +74,24 @@ int AuditOpen(const char *pathname,int flags, int ret)
 {
 	char commandname[TASK_COMM_LEN];
 	char fullname[256];
-   unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
-   void * buffer; // = kmalloc(size, 0);     
+    unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
+    void * buffer; // = kmalloc(size, 0);     
 	memset(fullname, 0, 256);
 	get_fullname(pathname, fullname);
 
-   if (strncmp(fullname,AUDITPATH,15) != 0) return 1; 
+    if (strncmp(fullname,AUDITPATH,15) != 0) return 1; 
 
 	strncpy(commandname,current->comm,TASK_COMM_LEN);
 
 	size = strlen(fullname) + 16 + TASK_COMM_LEN + 1;
 	buffer = kmalloc(size, 0);
 	memset(buffer, 0, size);
-   *((int*)buffer) = current->cred->uid.val;
-   *((int*)buffer + 1) = current->pid;
-   *((int*)buffer + 2) = flags;
-   *((int*)buffer + 3) = ret;
-   strcpy( (char*)( 4 + (int*)buffer ), commandname);
-   strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
+    *((int*)buffer) = current->cred->uid.val;
+    *((int*)buffer + 1) = current->pid;
+    *((int*)buffer + 2) = flags;
+    *((int*)buffer + 3) = ret;
+    strcpy( (char*)( 4 + (int*)buffer ), commandname);
+    strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
 
 	netlink_sendmsg(buffer, size);
 	return 0;
