@@ -38,9 +38,9 @@ asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
 {
 	int ret;
     char buf[MAX_LENGTH]={0};
-    printk(KERN_INFO"[+] open() hooked.");	
+    //printk(KERN_INFO"[+] open() hooked.");	
     if( pathname == NULL ) return -1;
-    printk("Open Intercepted : %lx\n", (unsigned long)pathname);
+    //printk("Open Intercepted : %lx\n", (unsigned long)pathname);
     // To secure from crash (SMAP protect)
     copy_from_user(buf,pathname,MAX_LENGTH);
     printk("pathname : %s\n",buf);
@@ -57,16 +57,16 @@ static int __init audit_init(void)
 #else
     unsigned long orig_cr0;
 #endif
-    printk("Hello kernel.\n");
+    printk("Audit Module Loading...\n");
     orig_cr0 = clear_and_return_cr0();
-    printk("Info: orig_cr0 %lx\n",(unsigned long)orig_cr0);
+    //printk("Info: orig_cr0 %lx\n",(unsigned long)orig_cr0);
 	sys_call_table = get_sys_call_table();
-	printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
+	//printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
 	
     //Hook Sys Call Open
 	orig_open   = (void*)sys_call_table[__NR_open];
-    printk("Info: orig_open at %lx\n",(unsigned long) orig_open);
-    printk("Info: hacked_open at %lx\n",(unsigned long) &hacked_open);
+    //printk("Info: orig_open at %lx\n",(unsigned long) orig_open);
+    //printk("Info: hacked_open at %lx\n",(unsigned long) &hacked_open);
     
     // It seems that change the 16bit of CR0 on x86_64 platform won't work.
     // No no, CR0 can work. But I still don't understand why define sys_call_table as unsigned long* and it will work?
@@ -75,6 +75,7 @@ static int __init audit_init(void)
 	
     //Initialize Netlink
 	netlink_init();
+    printk("Audit Module loaded.\n");
 	return 0;
 }
 

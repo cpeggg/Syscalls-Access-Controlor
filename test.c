@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <errno.h>
+
 void callsys(void){
     system("/bin/sh");
 }
@@ -22,5 +24,6 @@ int main()
     write(1,buf,0x20);
     printf("\n%p\n",callsys);
     printf("\n%p\n",&callsys);
+    printf("%d\n",EACCES);
     return 0;
 }
