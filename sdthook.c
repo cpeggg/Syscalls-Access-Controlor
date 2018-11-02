@@ -45,6 +45,7 @@ asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
     copy_from_user(buf,pathname,MAX_LENGTH);
     printk("pathname : %s\n",buf);
 	ret = orig_open(pathname, flags, mode);
+    if (ret<-1) ret=-1;
   	AuditOpen(buf,flags,ret);
   	return ret; 
 }
