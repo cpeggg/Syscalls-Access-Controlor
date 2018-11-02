@@ -77,7 +77,6 @@ unsigned int clear_and_return_cr0(void)
     ret = cr0;
     cr0 &= (~0x10000);
     write_cr0(cr0);
-    //_disable();
     asm("cli;");
 
 #endif
@@ -93,7 +92,6 @@ void setback_cr0(unsigned int val)
 #else
 void setback_cr0(unsigned long val)
 {
-    //_enable();
     asm("sti;");
     write_cr0(val);
 }

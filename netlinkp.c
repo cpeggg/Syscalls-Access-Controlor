@@ -90,9 +90,8 @@ int AuditOpen(const char *pathname,int flags, int ret)
     *((int*)buffer + 1) = current->pid;
     *((int*)buffer + 2) = flags;
     *((int*)buffer + 3) = ret;
-    strcpy( (char*)( 4 + (int*)buffer ), commandname);
-    strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
-
+    strcpy( (char*)( 4 + (int*)buffer  ), commandname );
+    strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer  ), fullname );
 	netlink_sendmsg(buffer, size);
 	return 0;
 }

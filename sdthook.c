@@ -13,6 +13,7 @@
 #include <linux/sched.h>
 #include <linux/unistd.h>
 #define MAX_LENGTH 256
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("cpegg");
 MODULE_DESCRIPTION("A simple example Linux module leart from Robert W. Oliver II");
