@@ -34,9 +34,9 @@ void setback_cr0(unsigned long val);
 unsigned long * sys_call_table=NULL;
 asmlinkage int (* orig_open)(const char *pathname, int flags, mode_t mode);
 
-asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
+asmlinkage long hacked_open(const char *pathname, int flags, mode_t mode)
 {
-	int ret;
+	long ret;
     char buf[MAX_LENGTH]={0};
     //printk(KERN_INFO"[+] open() hooked.");	
     if( pathname == NULL ) return -1;
@@ -45,7 +45,6 @@ asmlinkage int hacked_open(const char *pathname, int flags, mode_t mode)
     copy_from_user(buf,pathname,MAX_LENGTH);
     //printk("pathname : %s\n",buf);
 	ret = orig_open(pathname, flags, mode);
-    if (ret<-1) ret=-1;
   	AuditOpen(buf,flags,ret);
   	return ret; 
 }

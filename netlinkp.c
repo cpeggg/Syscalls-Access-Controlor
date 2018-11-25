@@ -93,7 +93,7 @@ int AuditOpen(const char *pathname,int flags, int ret)
     strcpy( (char*)( 4 + (int*)buffer  ), commandname );
     strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer  ), fullname );
 	netlink_sendmsg(buffer, size);
-	return 0;
+    return 0;
 }
    
 

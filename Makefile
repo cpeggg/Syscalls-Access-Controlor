@@ -7,5 +7,5 @@ default:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
 	gcc auditdaemon.c -o auditdaemon
 clean:
-	$(RM) -rf .*.cmd *.mod.c *.o *.ko .tmp* auditdaemon log
+	$(RM) -rf .*.cmd *.mod.c *.o.* *.ko .tmp* auditdaemon log *.order *.symvers
 

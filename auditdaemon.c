@@ -34,10 +34,9 @@ void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret)
 	char opentype[16];
 	if (ret > 0) strcpy(openresult,"success");
 	else strcpy(openresult,"failed");
-	if (flags & O_RDONLY ) strcpy(opentype, "Read");
-	else if (flags & O_WRONLY ) strcpy(opentype, "Write");
+	if (flags & O_WRONLY ) strcpy(opentype, "Write");
 	else if (flags & O_RDWR ) strcpy(opentype, "Read/Write");
-	else strcpy(opentype,"other");
+	else strcpy(opentype,"Read");
 
 	time_t t=time(0);
 	if (logfile == NULL)	return;
@@ -90,7 +89,16 @@ void killdeal_func()
 	 	free(nlh);
 	exit(0);
 }
-
+void intdeal_func()
+{
+    printf("The process recv SIGINT, exit.\n");
+    close(sock_fd);
+    if (logfile != NULL)
+        fclose(logfile);
+    if (nlh != NULL)
+        free(nlh);
+    exit(0);
+}
 int main(int argc, char *argv[]){
 	char buff[110];
 	//void killdeal_func();
@@ -104,6 +112,7 @@ int main(int argc, char *argv[]){
 	
 
 	signal(SIGTERM,killdeal_func);
+    signal(SIGINT,intdeal_func);
 	sock_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_TEST);
    nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
    memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
