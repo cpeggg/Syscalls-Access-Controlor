@@ -12,7 +12,9 @@
 #include <linux/mm.h>
 #include <linux/sched.h>
 #include <linux/unistd.h>
+#include <linux/slab.h>
 #define MAX_LENGTH 256
+#define BUFFER_SIZE 0x1000
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("cpegg");
@@ -22,6 +24,7 @@ MODULE_VERSION("0.01");
 void netlink_release(void);
 void netlink_init(void);
 int AuditOpen(const char *pathname, int flags, int ret);
+void* buf;//for univeral use
 
 void *get_sys_call_table(void);
 #ifdef _X86_
@@ -44,6 +47,7 @@ asmlinkage int (* orig_openat)(int dirfd, const char *pathname, int flags, mode_
 
 asmlinkage ssize_t hook_read(int fd, void *buf, size_t count){
     printk(KERN_DEBUG "hook_read");
+
     return orig_read(fd, buf, count);
 }
 asmlinkage ssize_t hook_write(int fd, const void *buf, size_t count){
@@ -53,10 +57,10 @@ asmlinkage ssize_t hook_write(int fd, const void *buf, size_t count){
 asmlinkage long hook_open(const char *pathname, int flags, mode_t mode)
 {
 	long ret;
-    char buf[MAX_LENGTH]={0};
     printk(KERN_DEBUG"hook_open");
     if( pathname == NULL ) return -1;
     // To secure from crash (SMAP protect)
+    memset(buf,0,BUFFER_SIZE);
     copy_from_user(buf,pathname,MAX_LENGTH);
 	ret = orig_open(pathname, flags, mode);
   	AuditOpen(buf,flags,ret);
@@ -93,6 +97,8 @@ static int __init audit_init(void)
 #endif
     printk("Audit Module Loading...\n");
     
+    buf=kzalloc(BUFFER_SIZE,GFP_KERNEL);
+
     orig_cr0 = clear_and_return_cr0();
 
 	sys_call_table = get_sys_call_table();
@@ -150,6 +156,7 @@ static void __exit audit_exit(void)
     sys_call_table[__NR_openat] = (unsigned long)orig_openat;
 
     setback_cr0(orig_cr0);
+    kfree(buf);
  	netlink_release();  	
     printk(KERN_INFO "Module exit.\n");
 }
