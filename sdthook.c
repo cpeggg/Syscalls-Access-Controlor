@@ -32,21 +32,55 @@ unsigned long clear_and_return_cr0(void);
 void setback_cr0(unsigned long val);
 #endif
 unsigned long * sys_call_table=NULL;
-asmlinkage int (* orig_open)(const char *pathname, int flags, mode_t mode);
 
-asmlinkage long hacked_open(const char *pathname, int flags, mode_t mode)
+asmlinkage ssize_t (* orig_read)(int fd, void *buf, size_t count);
+asmlinkage ssize_t (* orig_write)(int fd, const void *buf, size_t count);
+asmlinkage int (* orig_open)(const char *pathname, int flags, mode_t mode);
+asmlinkage int (* orig_close)(int fd);
+asmlinkage off_t (* orig_lseek)(int fd, off_t offset, int whence);
+asmlinkage int (* orig_execve)(const char *filename, char *const argv[], char *const envp[]);
+asmlinkage int (* orig_creat)(const char *pathname, mode_t mode);
+asmlinkage int (* orig_openat)(int dirfd, const char *pathname, int flags, mode_t mode);
+
+asmlinkage ssize_t hook_read(int fd, void *buf, size_t count){
+    printk(KERN_DEBUG "hook_read");
+    return orig_read(fd, buf, count);
+}
+asmlinkage ssize_t hook_write(int fd, const void *buf, size_t count){
+    printk(KERN_DEBUG"hook_write");
+    return orig_write(fd, buf, count);
+}
+asmlinkage long hook_open(const char *pathname, int flags, mode_t mode)
 {
 	long ret;
     char buf[MAX_LENGTH]={0};
-    //printk(KERN_INFO"[+] open() hooked.");	
+    printk(KERN_DEBUG"hook_open");
     if( pathname == NULL ) return -1;
-    //printk("Open Intercepted : %lx\n", (unsigned long)pathname);
     // To secure from crash (SMAP protect)
     copy_from_user(buf,pathname,MAX_LENGTH);
-    //printk("pathname : %s\n",buf);
 	ret = orig_open(pathname, flags, mode);
   	AuditOpen(buf,flags,ret);
   	return ret; 
+}
+asmlinkage long hook_close(int fd){
+    printk(KERN_DEBUG"hook_close");
+    return orig_close(fd);
+}
+asmlinkage off_t hook_lseek(int fd, off_t offset, int whence){
+    printk(KERN_DEBUG"hook_lseek");
+    return orig_lseek(fd, offset, whence);
+}
+asmlinkage long hook_execve(const char *filename, char *const argv[], char *const envp[]){
+    printk(KERN_DEBUG"hook_execve");
+    return orig_execve(filename, argv, envp);
+}
+asmlinkage long hook_creat(const char *pathname, mode_t mode){
+    printk(KERN_DEBUG"hook_creat");
+    return orig_creat(pathname, mode);
+}
+asmlinkage long hook_openat(int dirfd, const char *pathname, int flags, mode_t mode){
+    printk(KERN_DEBUG"hook_openat");
+    return orig_openat(dirfd, pathname, flags, mode);
 }
   
 
@@ -58,20 +92,37 @@ static int __init audit_init(void)
     unsigned long orig_cr0;
 #endif
     printk("Audit Module Loading...\n");
-    orig_cr0 = clear_and_return_cr0();
-    //printk("Info: orig_cr0 %lx\n",(unsigned long)orig_cr0);
-	sys_call_table = get_sys_call_table();
-	//printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
-	
-    //Hook Sys Call Open
-	orig_open   = (void*)sys_call_table[__NR_open];
-    //printk("Info: orig_open at %lx\n",(unsigned long) orig_open);
-    //printk("Info: hacked_open at %lx\n",(unsigned long) &hacked_open);
     
-    // It seems that change the 16bit of CR0 on x86_64 platform won't work.
-    // No no, CR0 can work. But I still don't understand why define sys_call_table as unsigned long* and it will work?
-    sys_call_table[__NR_open] = (unsigned long)&hacked_open;
-	setback_cr0(orig_cr0);
+    orig_cr0 = clear_and_return_cr0();
+
+	sys_call_table = get_sys_call_table();
+    
+    //Hook Sys Call Open
+	orig_open = (void*)sys_call_table[__NR_open];
+    sys_call_table[__NR_open] = (unsigned long)&hook_open;
+    //Hook Sys Call Read
+    orig_read = (void*)sys_call_table[__NR_read];
+    sys_call_table[__NR_read] = (unsigned long)&hook_read;
+    //Hook Sys Call Write
+    orig_write = (void*)sys_call_table[__NR_write];
+    sys_call_table[__NR_write] = (unsigned long)&hook_write;
+    //Hook Sys Call Close
+    orig_close = (void*)sys_call_table[__NR_close];
+    sys_call_table[__NR_close] = (unsigned long)&hook_close;
+    //Hook Sys Call Lseek
+    orig_lseek = (void*)sys_call_table[__NR_lseek];
+    sys_call_table[__NR_lseek] = (unsigned long)&hook_lseek;
+    //Hook Sys Call Execve
+    orig_execve = (void*)sys_call_table[__NR_execve];
+    sys_call_table[__NR_execve] = (unsigned long)&hook_execve;
+    //Hook Sys Call Creat
+    orig_creat = (void*)sys_call_table[__NR_creat];
+    sys_call_table[__NR_creat] = (unsigned long)&hook_creat;
+    //Hook Sys Call Openat
+    orig_openat = (void*)sys_call_table[__NR_openat];
+    sys_call_table[__NR_openat] = (unsigned long)&hook_openat;
+
+    setback_cr0(orig_cr0);
 	
     //Initialize Netlink
 	netlink_init();
@@ -88,8 +139,17 @@ static void __exit audit_exit(void)
     unsigned long orig_cr0;
 #endif
     orig_cr0 = clear_and_return_cr0();
-	sys_call_table[__NR_open] = (unsigned long)orig_open;
-	setback_cr0(orig_cr0);
+	
+    sys_call_table[__NR_open] = (unsigned long)orig_open;
+	sys_call_table[__NR_read] = (unsigned long)orig_read;
+    sys_call_table[__NR_write] = (unsigned long)orig_write;
+    sys_call_table[__NR_close] = (unsigned long)orig_close;
+    sys_call_table[__NR_lseek] = (unsigned long)orig_lseek;
+    sys_call_table[__NR_execve] = (unsigned long)orig_execve;
+    sys_call_table[__NR_creat] = (unsigned long)orig_creat;
+    sys_call_table[__NR_openat] = (unsigned long)orig_openat;
+
+    setback_cr0(orig_cr0);
  	netlink_release();  	
     printk(KERN_INFO "Module exit.\n");
 }
