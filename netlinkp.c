@@ -69,7 +69,12 @@ void get_fullname(const char *pathname,char *fullname)
 	strcat(fullname,pathname);
 	return;
 }
+int AuditExecve(const char *filename, const char* argv[],const char* envp[]){
 
+    //Access control
+    //Security Audition
+    return 0;
+}
 int AuditOpen(const char *pathname,int flags, int ret)
 {
 	char commandname[TASK_COMM_LEN];
@@ -79,12 +84,13 @@ int AuditOpen(const char *pathname,int flags, int ret)
 	memset(fullname, 0, 256);
 	get_fullname(pathname, fullname);
 
+    // Access control
     if (strncmp(fullname,AUDITPATH,15) != 0) return 1; 
 
+    // Security Audition
 	strncpy(commandname,current->comm,TASK_COMM_LEN);
-
 	size = strlen(fullname) + 16 + TASK_COMM_LEN + 1;
-	buffer = kmalloc(size, 0);
+	buffer = kzalloc(size, 0);
 	memset(buffer, 0, size);
     *((int*)buffer) = current->cred->uid.val;
     *((int*)buffer + 1) = current->pid;
@@ -93,6 +99,7 @@ int AuditOpen(const char *pathname,int flags, int ret)
     strcpy( (char*)( 4 + (int*)buffer  ), commandname );
     strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer  ), fullname );
 	netlink_sendmsg(buffer, size);
+    kfree(buffer);
     return 0;
 }
    

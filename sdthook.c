@@ -88,9 +88,7 @@ asmlinkage long hook_mprotect(void *addr, size_t len, int prot){
     return orig_mprotect(addr, len, prot);
 }
 asmlinkage long hook_execve(const char *filename, char *const argv[], char *const envp[]){
-    void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
-    copy_from_user(bufferSDTHook,filename,MAX_LENGTH);
-    kfree(bufferSDTHook);
+    //AuditExecve(filename,argv,envp);
     return orig_execve(filename, argv, envp);
 }
 asmlinkage long hook_creat(const char *pathname, mode_t mode){
@@ -112,18 +110,18 @@ asmlinkage long hook_remap_file_pages(void *addr, size_t size, int prot, size_t 
 static int __init audit_init(void)
 {
 #ifdef _X86_
-	unsigned int orig_cr0;
+    unsigned int orig_cr0;
 #else
     unsigned long orig_cr0;
 #endif    
     printk("Audit Module Loading...\n");
     
     orig_cr0 = clear_and_return_cr0();
-
-	sys_call_table = get_sys_call_table();
     
-    //Hook Sys Call Open
-	orig_open = (void*)sys_call_table[__NR_open];
+    sys_call_table = get_sys_call_table();
+    
+    //Hook Sys Call Open 
+    orig_open = (void*)sys_call_table[__NR_open];
     sys_call_table[__NR_open] = (unsigned long)&hook_open;
     //Hook Sys Call Read
     orig_read = (void*)sys_call_table[__NR_read];
@@ -152,10 +150,10 @@ static int __init audit_init(void)
 
     setback_cr0(orig_cr0);
 	
-    //Initialize Netlink
-	netlink_init();
+    //Initialize netlink
+    netlink_init();
     printk("Audit Module loaded.\n");
-	return 0;
+    return 0;
 }
 
 
@@ -169,7 +167,7 @@ static void __exit audit_exit(void)
     orig_cr0 = clear_and_return_cr0();
 	
     sys_call_table[__NR_open] = (unsigned long)orig_open;
-	sys_call_table[__NR_read] = (unsigned long)orig_read;
+    sys_call_table[__NR_read] = (unsigned long)orig_read;
     sys_call_table[__NR_write] = (unsigned long)orig_write;
     sys_call_table[__NR_mmap] = (unsigned long)orig_mmap;
     sys_call_table[__NR_mprotect] = (unsigned long)orig_mprotect;

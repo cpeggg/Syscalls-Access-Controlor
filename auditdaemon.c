@@ -114,10 +114,10 @@ int main(int argc, char *argv[]){
 	signal(SIGTERM,killdeal_func);
     signal(SIGINT,intdeal_func);
 	sock_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_TEST);
-   nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
-   memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
-
-   sendpid(getpid());
+    nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
+    memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
+    
+    sendpid(getpid());
 
 	/* open the log file at the begining of daemon, in case of this operation causes deadlock */
 	logfile=fopen(logpath, "w+");
@@ -126,19 +126,19 @@ int main(int argc, char *argv[]){
 		exit(1);
 	}
 	//Loop to get message
-	while(1)	{	//Read message from kernel
-		unsigned int uid, pid,flags,ret;
-		char * file_path;
+	while(1)	{	//Read message from Kernel
+        unsigned int uid, pid,flags,ret;
+        char * file_path;
 		char * commandname;
 		recvmsg(sock_fd, &msg, 0);
 		uid = *( (unsigned int *)NLMSG_DATA(nlh) );
-      pid = *( 1 + (int *)NLMSG_DATA(nlh)  ); 
-      flags = *( 2 + (int *)NLMSG_DATA(nlh)  ); 
-      ret = *( 3 + (int *)NLMSG_DATA(nlh)  ); 
-      commandname = (char *)( 4 + (int *)NLMSG_DATA(nlh));
-      file_path = (char *)( 4 + 16/4 + (int *)NLMSG_DATA(nlh));
-      Log(commandname, uid,pid, file_path,flags,ret);
-}
+        pid = *( 1 + (int *)NLMSG_DATA(nlh)  ); 
+        flags = *( 2 + (int *)NLMSG_DATA(nlh)  ); 
+        ret = *( 3 + (int *)NLMSG_DATA(nlh)  ); 
+        commandname = (char *)( 4 + (int *)NLMSG_DATA(nlh));
+        file_path = (char *)( 4 + 16/4 + (int *)NLMSG_DATA(nlh));
+        Log(commandname, uid,pid, file_path,flags,ret);
+    }
 	close(sock_fd);
 	free(nlh);
 	fclose(logfile);
