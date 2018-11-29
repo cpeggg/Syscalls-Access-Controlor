@@ -23,7 +23,9 @@ int main(){
     int creatFd=creat("./test_creat",0664);
     write(creatFd,buf,0x10);//SYSCALL TEST
     close(creatFd);
-    
+
+    int rootFd=open("/root/TestAudit",O_RDWR);
+
     return 0;
 }
 

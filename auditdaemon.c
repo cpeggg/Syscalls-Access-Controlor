@@ -1,3 +1,11 @@
+/*************************************************************************
+	> File Name: auditdaemon_ref.c
+	> Author: 
+	> Mail: 
+	> Created Time: Wed 28 Nov 2018 09:43:27 PM PST
+ ************************************************************************/
+
+#include<stdio.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -25,27 +33,52 @@ struct iovec iov;
 
 FILE *logfile;
 
-void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret)
+void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret,int syscall)
 {
 	char logtime[64];
 	char username[32];
 	struct passwd *pwinfo;
-	char openresult[10];
-	char opentype[16];
-	if (ret > 0) strcpy(openresult,"success");
-	else strcpy(openresult,"failed");
-	if (flags & O_WRONLY ) strcpy(opentype, "Write");
-	else if (flags & O_RDWR ) strcpy(opentype, "Read/Write");
-	else strcpy(opentype,"Read");
-
 	time_t t=time(0);
+    //Used for open
+    char openresult[10];
+    char opentype[16];
+
+
 	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username,pwinfo->pw_name);
-
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
-	fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
-	printf("%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
+
+	switch (syscall){
+    case 0:
+        break;
+    case 1:
+        break;
+    case 2:
+	   
+	    
+	    if (ret > 0) strcpy(openresult,"success");
+	        else strcpy(openresult,"failed");
+        if (flags & O_WRONLY ) strcpy(opentype, "Write");
+	        else if (flags & O_RDWR ) strcpy(opentype, "Read/Write");
+    	        else strcpy(opentype,"Read");
+        fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
+        printf("%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
+        break;
+    case 9:
+        break;
+    case 10:
+        break;
+    case 59:
+        break;
+    case 85:
+        break;
+    case 216:
+        break;
+    case 257:
+        break;
+    }
+
 }
 
 
@@ -89,9 +122,9 @@ void killdeal_func()
 	 	free(nlh);
 	exit(0);
 }
-void intdeal_func()
-{
-    printf("The process recv SIGINT, exit.\n");
+
+void intdeal_func(){
+    printf("The process is interrupted! \n");
     close(sock_fd);
     if (logfile != NULL)
         fclose(logfile);
@@ -99,6 +132,45 @@ void intdeal_func()
         free(nlh);
     exit(0);
 }
+void LogRead(struct nlmsghdr *nlh){
+    return ;
+}
+void LogWrite(struct nlmsghdr *nlh){
+    return ;
+}
+void LogOpen(struct nlmsghdr *nlh){
+    unsigned int uid, pid,flags,ret;
+    char *file_path;
+    char *commandname;
+    uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh)  );
+    pid = *( 2 + (int *)NLMSG_DATA(nlh)   );
+    flags = *( 3 + (int *)NLMSG_DATA(nlh)   );
+    ret = *( 4 + (int *)NLMSG_DATA(nlh)   );
+    commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh) );
+    file_path = (char *)( 5 + 16/4 + (int *)NLMSG_DATA(nlh) );
+    Log(commandname, uid,pid, file_path,flags,ret,2);
+    return ;
+}
+void LogMmap(struct nlmsghdr *nlh){
+    return ;
+}
+void LogMprotect(struct nlmsghdr *nlh){
+    return ;
+}
+void LogExecve(struct nlmsghdr *nlh){
+    return ;
+}
+void LogCreat(struct nlmsghdr *nlh){
+    return ;
+}
+void LogRemapFilePages(struct nlmsghdr *nlh){
+    return ;
+}
+void LogOpenat(struct nlmsghdr *nlh){
+    return ;
+}
+
+
 int main(int argc, char *argv[]){
 	char buff[110];
 	//void killdeal_func();
@@ -126,22 +198,61 @@ int main(int argc, char *argv[]){
 		exit(1);
 	}
 	//Loop to get message
-	while(1)	{	//Read message from Kernel
-        unsigned int uid, pid,flags,ret;
-        char * file_path;
+	while(1)	{	//Read message from kernel
+		unsigned int uid, pid,flags,ret;
+		char * file_path;
 		char * commandname;
+        int syscall=-1;
 		recvmsg(sock_fd, &msg, 0);
-		uid = *( (unsigned int *)NLMSG_DATA(nlh) );
-        pid = *( 1 + (int *)NLMSG_DATA(nlh)  ); 
-        flags = *( 2 + (int *)NLMSG_DATA(nlh)  ); 
-        ret = *( 3 + (int *)NLMSG_DATA(nlh)  ); 
-        commandname = (char *)( 4 + (int *)NLMSG_DATA(nlh));
-        file_path = (char *)( 4 + 16/4 + (int *)NLMSG_DATA(nlh));
-        Log(commandname, uid,pid, file_path,flags,ret);
+        syscall = *( (unsigned int *)NLMSG_DATA(nlh)  );
+        switch (syscall){
+            case 0:
+                printf("[*]DEBUG: LogRead()\n");
+                LogRead(nlh);
+                break;
+            case 1:
+                printf("[*]DEBUG: LogWrite()\n");
+                LogWrite(nlh);
+                break;
+            case 2:
+                printf("[*]DEBUG: LogOpen()\n");
+                LogOpen(nlh);
+                break;
+            case 9:
+                printf("[*]DEBUG: LogMmap()\n");
+                LogMmap(nlh);
+                break;
+            case 10:
+                printf("[*]DEBUG: LogMprotect()\n");
+                LogMprotect(nlh);
+                break;
+            case 59:
+                printf("[*]DEBUG: LogExecve()\n");
+                LogExecve(nlh);
+                break;
+            case 85:
+                printf("[*]DEBUG: LogCreat()\n");
+                LogCreat(nlh);
+                break;
+            case 216:
+                printf("[*]DEBUG: LogRemapFilePages()\n");
+                LogRemapFilePages(nlh);
+                break;
+            case 257:
+                printf("[*]DEBUG: LogOpenat()\n");
+                LogOpenat(nlh);
+                break;
+            default:
+                printf("[-]ERROR: wrong packet format, NLMSG_DATA(nlh): ");
+                write(1,NLMSG_DATA(nlh),0x100);
+                break;
+        }
+      
     }
 	close(sock_fd);
 	free(nlh);
 	fclose(logfile);
 	return 0;
 }
+
 

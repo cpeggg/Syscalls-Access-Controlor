@@ -10,5 +10,12 @@ default:
 	echo "SYSCALL TEST" > test
 	-rm test_creat
 clean:
-	$(RM) -rf .*.cmd *.mod.c *.o.* *.ko .tmp* auditdaemon log *.order *.symvers *.o test test_creat syscall_test
-
+	-$(RM) -rf .*.cmd *.mod.c *.o.* *.ko .tmp* auditdaemon log *.order *.symvers *.o test test_creat syscall_test peda*
+adduser:
+	useradd -u 1001 -g 1000 -d /home/test_cpegg -m test_cpegg
+	groupadd -g 1001 cpegg2
+	useradd -u 1002 -g 1001 -d /home/test_cpegg2 -m test_cpegg2
+rmuser:
+	userdel -r test_cpegg
+	userdel -r test_cpegg2
+	groupdel cpegg2
