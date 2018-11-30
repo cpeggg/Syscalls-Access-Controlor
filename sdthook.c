@@ -23,8 +23,8 @@ MODULE_VERSION("0.01");
 
 void netlink_release(void);
 void netlink_init(void);
-int AuditOpen(const char *pathname, int flags, int ret);
-
+extern int AuditOpen(const char *pathname, int flags, int ret);
+extern int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret);
 void *get_sys_call_table(void);
 #ifdef _X86_
 unsigned int clear_and_return_cr0(void);
@@ -34,6 +34,22 @@ unsigned long clear_and_return_cr0(void);
 void setback_cr0(unsigned long val);
 #endif
 unsigned long * sys_call_table=NULL;
+
+struct access_control_list{
+    long syscall_num;
+    long grant;//you can make use of every bit
+    char* substring;
+};
+struct user_access_control{
+    unsigned int uid;
+    struct access_control_list access_list;
+};
+struct group_access_control{
+    unsigned int gid;
+    struct access_control_list access_list;
+};
+struct user_access_control* user_access_control=NULL;
+struct group_access_control* group_access_control=NULL;
 
 asmlinkage ssize_t (* orig_read)(int fd, void *buf, size_t count);
 asmlinkage ssize_t (* orig_write)(int fd, const void *buf, size_t count);
@@ -70,11 +86,11 @@ asmlinkage long hook_open(const char *pathname, int flags, mode_t mode)
 {
 	long ret;
     void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
-    if( pathname == NULL ) return -1;
-    
+    if( pathname == NULL ) return -1; 
     // To secure from crash (SMAP protect)
     copy_from_user(bufferSDTHook,pathname,MAX_LENGTH);
-	ret = orig_open(pathname, flags, mode);
+	// Time for access control
+    ret = orig_open(pathname, flags, mode);
   	AuditOpen(bufferSDTHook,flags,ret);
     kfree(bufferSDTHook);
   	return ret; 
@@ -88,8 +104,17 @@ asmlinkage long hook_mprotect(void *addr, size_t len, int prot){
     return orig_mprotect(addr, len, prot);
 }
 asmlinkage long hook_execve(const char *filename, char *const argv[], char *const envp[]){
-    //AuditExecve(filename,argv,envp);
-    return orig_execve(filename, argv, envp);
+    long ret;
+    void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
+    if( filename == NULL ) return -1; 
+    // To secure from crash (SMAP protect)
+    copy_from_user(bufferSDTHook,filename,MAX_LENGTH);
+	// Time for access control
+    ret = orig_execve(filename, argv, envp);
+    printk(KERN_DEBUG"hook_execve, ret=%ld",ret);
+    AuditExecve(bufferSDTHook, argv, envp, ret);
+    kfree(bufferSDTHook);
+    return ret;
 }
 asmlinkage long hook_creat(const char *pathname, mode_t mode){
     void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);

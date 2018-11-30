@@ -10,7 +10,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-int main(){
+int main(int argc, char*argv[], char *envp[]){
+    //execve("/bin/sh",argv,envp);
+    execve("/root/TestAudit",argv,envp);
     char buf[0x10];
     int fileFd=open("./test",O_RDWR|O_CREAT,0664);
     read(fileFd,buf,0x10);
@@ -25,7 +27,6 @@ int main(){
     close(creatFd);
 
     int rootFd=open("/root/TestAudit",O_RDWR);
-
-    return 0;
+    return -22;
 }
 

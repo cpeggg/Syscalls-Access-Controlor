@@ -20,7 +20,7 @@
 #include <time.h>
 #include <signal.h>
 #include <pwd.h>
-
+#include <stdarg.h>
 #define TM_FMT "%Y-%m-%d %H:%M:%S"
 
 #define NETLINK_TEST 29
@@ -33,16 +33,26 @@ struct iovec iov;
 
 FILE *logfile;
 
-void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret,int syscall)
+void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path, int flags,int ret)
 {
 	char logtime[64];
 	char username[32];
 	struct passwd *pwinfo;
 	time_t t=time(0);
+    int ret;
     //Used for open
     char openresult[10];
     char opentype[16];
+    char* file_path;
+    int flags;
+    //Used for execve
+    char *execve_path;
 
+	va_list pArgs;  //定义va_list类型的指针pArgs，用于存储参数地址
+    va_start(pArgs, syscall); //初始化pArgs指针，使其指向第一个可变参数。该宏第二个参数是变参列表的前一个参数，即最后一个固定参数
+   
+    //若函数有多个可变参数，则依次调用va_arg宏获取各个变参
+    
 
 	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
@@ -51,12 +61,15 @@ void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret,
 
 	switch (syscall){
     case 0:
+
         break;
     case 1:
+
         break;
     case 2:
-	   
-	    
+        file_path = va_arg(pArgs, char*);
+        flags = va_arg(pArgs, int); 
+        ret = va_arg(pArgs, int);
 	    if (ret > 0) strcpy(openresult,"success");
 	        else strcpy(openresult,"failed");
         if (flags & O_WRONLY ) strcpy(opentype, "Write");
@@ -70,6 +83,12 @@ void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret,
     case 10:
         break;
     case 59:
+        execve_path = va_arg(pArgs, char*);
+        ret = va_arg(pArgs, int);
+        if (ret > 0) strcpy(openresult,"success");
+	        else strcpy(openresult,"failed");
+		fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %s\n",username,uid,commandname,pid,logtime,execve_path, openresult);
+        printf("%s(%d) %s(%d) %s \"%s\" %s\n",username,uid,commandname,pid,logtime,execve_path, openresult);	
         break;
     case 85:
         break;
@@ -78,7 +97,7 @@ void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret,
     case 257:
         break;
     }
-
+	va_end(pArgs);  //将指针pArgs置为无效，结束变参的获取
 }
 
 
@@ -148,7 +167,7 @@ void LogOpen(struct nlmsghdr *nlh){
     ret = *( 4 + (int *)NLMSG_DATA(nlh)   );
     commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh) );
     file_path = (char *)( 5 + 16/4 + (int *)NLMSG_DATA(nlh) );
-    Log(commandname, uid,pid, file_path,flags,ret,2);
+    Log(commandname, uid,pid, 2, file_path,flags,ret);
     return ;
 }
 void LogMmap(struct nlmsghdr *nlh){
@@ -158,6 +177,15 @@ void LogMprotect(struct nlmsghdr *nlh){
     return ;
 }
 void LogExecve(struct nlmsghdr *nlh){
+    unsigned int uid, pid, ret;
+    char *file_path;
+    char *commandname;
+    uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh)  );
+    pid = *( 2 + (int *)NLMSG_DATA(nlh)   );
+    ret = *( 3 + (int *)NLMSG_DATA(nlh)   );
+    commandname = (char *)( 4 + (int *)NLMSG_DATA(nlh) );
+    file_path = (char *)( 4 + 16/4 + (int *)NLMSG_DATA(nlh) );
+    Log(commandname, uid,pid, 59, file_path, ret);
     return ;
 }
 void LogCreat(struct nlmsghdr *nlh){

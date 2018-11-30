@@ -1,0 +1,1 @@
+cmd_/home/cpegg/fileaudit/AuditModule.ko := ld -r -m elf_x86_64 -z max-page-size=0x200000 -T ./scripts/module-common.lds --build-id  -o /home/cpegg/fileaudit/AuditModule.ko /home/cpegg/fileaudit/AuditModule.o /home/cpegg/fileaudit/AuditModule.mod.o ;  true
