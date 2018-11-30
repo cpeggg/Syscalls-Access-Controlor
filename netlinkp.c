@@ -8,6 +8,7 @@
 #define TASK_COMM_LEN 16
 #define NETLINK_TEST 29
 #define AUDITPATH "/root/TestAudit"
+#define CONTENTAUDIT "USER's SECRET"
 #define MAX_LENGTH 256
 static u32 pid=0;
 static struct sock *nl_sk = NULL;
@@ -68,6 +69,29 @@ void get_fullname(const char *pathname,char *fullname)
 	strcat(fullname,"/");
 	strcat(fullname,pathname);
 	return;
+}
+int AuditRead(const char* content, int fd, size_t count, ssize_t ret){
+    char commandname[TASK_COMM_LEN];
+    unsigned int size;
+    void* buffer;
+    void*needle;
+	if (!(needle=strstr(content,CONTENTAUDIT))) return 1;//printk("AUDITREAD 1");}
+	/*
+    strncpy(commandname,current->comm,TASK_COMM_LEN);
+	size = 4 + strlen(content) + 16 + TASK_COMM_LEN + 1;
+	buffer = kzalloc(size, 0);
+    *((int*)buffer) = 0;
+    *((int*)buffer + 1) = current->cred->uid.val;
+    *((int*)buffer + 2) = current->pid;
+    *((int*)buffer + 3) = ret;
+	*((int*)buffer + 4) = count;
+    strcpy( (char*)( 5 + (int*)buffer  ), commandname );
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer  ), content );
+	netlink_sendmsg(buffer, size);
+    kfree(buffer);
+    */
+    printk("AUDITREAD 0, %lx, %20s, %d",needle, needle,strlen(content));
+    return 0;
 }
 int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret){
     char commandname[TASK_COMM_LEN];

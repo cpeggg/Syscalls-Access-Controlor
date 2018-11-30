@@ -25,6 +25,8 @@ void netlink_release(void);
 void netlink_init(void);
 extern int AuditOpen(const char *pathname, int flags, int ret);
 extern int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret);
+extern int AuditRead(const char* content, int fd, size_t count, ssize_t ret); 
+
 void *get_sys_call_table(void);
 #ifdef _X86_
 unsigned int clear_and_return_cr0(void);
@@ -67,10 +69,11 @@ asmlinkage ssize_t hook_read(int fd, void *buf, size_t count){
     ssize_t ret;
     void *bufferSDTHook=kzalloc(count,GFP_ATOMIC);
     ret = orig_read(fd, buf, count);
-    if (ret>=0)
+    if (ret>=0){
         copy_from_user(bufferSDTHook, buf, count); // to avoid copy \0 to userspace when ret < count
-    // To Apply analysis
-    // ...
+        // To Apply analysis
+        AuditRead(bufferSDTHook,fd,count,ret);
+    }
     kfree(bufferSDTHook);
     return ret;
 }

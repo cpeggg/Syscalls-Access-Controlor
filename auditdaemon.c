@@ -40,6 +40,9 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
 	struct passwd *pwinfo;
 	time_t t=time(0);
     int ret;
+	//Used for read
+	char *content;
+    int count;
     //Used for open
     char openresult[10];
     char opentype[16];
@@ -61,6 +64,14 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
 
 	switch (syscall){
     case 0:
+        content = va_arg(pArgs, char*);
+        count = va_arg(pArgs, int);
+        ret = va_arg(pArgs, int);
+		if (ret > 0) strcpy(openresult,"success");
+	        else strcpy(openresult,"failed");
+        fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
+        printf("%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
+        break;	
 
         break;
     case 1:
@@ -152,6 +163,16 @@ void intdeal_func(){
     exit(0);
 }
 void LogRead(struct nlmsghdr *nlh){
+    unsigned int uid, pid, ret, count;
+    char* content;
+    char* commandname;
+    uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh)  );
+    pid = *( 2 + (int *)NLMSG_DATA(nlh)   );
+    ret = *( 3 + (int *)NLMSG_DATA(nlh)   );
+    count = *( 4 + (int *)NLMSG_DATA(nlh) );
+    commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh) );
+    content = (char *)( 5 + 16/4 + (int *)NLMSG_DATA(nlh) );
+    Log(commandname, uid,pid, 0, content, count, ret);
     return ;
 }
 void LogWrite(struct nlmsghdr *nlh){
