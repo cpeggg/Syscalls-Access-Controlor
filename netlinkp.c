@@ -75,22 +75,24 @@ int AuditRead(const char* content, int fd, size_t count, ssize_t ret){
     unsigned int size;
     void* buffer;
     void*needle;
-	if (!(needle=strstr(content,CONTENTAUDIT))) return 1;//printk("AUDITREAD 1");}
-	/*
+    //in case the root/user process related to read dmesg
+    if (current->cred->uid.val==0 || !strcmp(current->comm, "in:imklog") || !strcmp(current->comm, "gnome-terminal-") || !(needle=strstr(content,CONTENTAUDIT))) {return 1;printk("1");}
+    //printk(KERN_DEBUG"current->comm: %s",current->comm);
+    
     strncpy(commandname,current->comm,TASK_COMM_LEN);
-	size = 4 + strlen(content) + 16 + TASK_COMM_LEN + 1;
+	size = 8 + strlen(content) + 16 + TASK_COMM_LEN + 1;
 	buffer = kzalloc(size, 0);
     *((int*)buffer) = 0;
     *((int*)buffer + 1) = current->cred->uid.val;
     *((int*)buffer + 2) = current->pid;
-    *((int*)buffer + 3) = ret;
-	*((int*)buffer + 4) = count;
-    strcpy( (char*)( 5 + (int*)buffer  ), commandname );
-    strcpy( (char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer  ), content );
+    *((int*)buffer + 3) = fd;
+    *((int*)buffer + 4) = ret;
+	*((int*)buffer + 5) = count;
+    strcpy( (char*)( 6 + (int*)buffer  ), commandname );
+    strcpy( (char*)( 6 + TASK_COMM_LEN/4 +(int*)buffer  ), content );
 	netlink_sendmsg(buffer, size);
     kfree(buffer);
-    */
-    printk("AUDITREAD 0, %lx, %20s, %d",needle, needle,strlen(content));
+    
     return 0;
 }
 int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret){

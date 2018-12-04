@@ -70,7 +70,7 @@ asmlinkage ssize_t hook_read(int fd, void *buf, size_t count){
     void *bufferSDTHook=kzalloc(count,GFP_ATOMIC);
     ret = orig_read(fd, buf, count);
     if (ret>=0){
-        copy_from_user(bufferSDTHook, buf, count); // to avoid copy \0 to userspace when ret < count
+        copy_from_user(bufferSDTHook, buf, ret); // to avoid copy \0 to userspace when ret < count
         // To Apply analysis
         AuditRead(bufferSDTHook,fd,count,ret);
     }
@@ -114,7 +114,6 @@ asmlinkage long hook_execve(const char *filename, char *const argv[], char *cons
     copy_from_user(bufferSDTHook,filename,MAX_LENGTH);
 	// Time for access control
     ret = orig_execve(filename, argv, envp);
-    printk(KERN_DEBUG"hook_execve, ret=%ld",ret);
     AuditExecve(bufferSDTHook, argv, envp, ret);
     kfree(bufferSDTHook);
     return ret;
@@ -154,6 +153,7 @@ static int __init audit_init(void)
     //Hook Sys Call Read
     orig_read = (void*)sys_call_table[__NR_read];
     sys_call_table[__NR_read] = (unsigned long)&hook_read;
+    /*
     //Hook Sys Call Write
     orig_write = (void*)sys_call_table[__NR_write];
     sys_call_table[__NR_write] = (unsigned long)&hook_write;
@@ -162,10 +162,11 @@ static int __init audit_init(void)
     sys_call_table[__NR_mmap] = (unsigned long)&hook_mmap;
     //Hook Sys Call Mprotect
     orig_mprotect = (void*)sys_call_table[__NR_mprotect];
-    sys_call_table[__NR_mprotect] = (unsigned long)&hook_mprotect;
+    sys_call_table[__NR_mprotect] = (unsigned long)&hook_mprotect;*/
     //Hook Sys Call Execve
     orig_execve = (void*)sys_call_table[__NR_execve];
     sys_call_table[__NR_execve] = (unsigned long)&hook_execve;
+    /*
     //Hook Sys Call Creat
     orig_creat = (void*)sys_call_table[__NR_creat];
     sys_call_table[__NR_creat] = (unsigned long)&hook_creat;
@@ -175,6 +176,7 @@ static int __init audit_init(void)
     //Hook Sys Call Remap_file_pages
     orig_remap_file_pages = (void*)sys_call_table[__NR_remap_file_pages];
     sys_call_table[__NR_remap_file_pages] = (unsigned long)&hook_remap_file_pages;
+    */
 
     setback_cr0(orig_cr0);
 	
@@ -195,14 +197,15 @@ static void __exit audit_exit(void)
     orig_cr0 = clear_and_return_cr0();
 	
     sys_call_table[__NR_open] = (unsigned long)orig_open;
-    sys_call_table[__NR_read] = (unsigned long)orig_read;
+    sys_call_table[__NR_read] = (unsigned long)orig_read;/*
     sys_call_table[__NR_write] = (unsigned long)orig_write;
     sys_call_table[__NR_mmap] = (unsigned long)orig_mmap;
-    sys_call_table[__NR_mprotect] = (unsigned long)orig_mprotect;
+    sys_call_table[__NR_mprotect] = (unsigned long)orig_mprotect;*/
     sys_call_table[__NR_execve] = (unsigned long)orig_execve;
+    /*
     sys_call_table[__NR_creat] = (unsigned long)orig_creat;
     sys_call_table[__NR_openat] = (unsigned long)orig_openat;
-    sys_call_table[__NR_remap_file_pages] = (unsigned long)orig_remap_file_pages;
+    sys_call_table[__NR_remap_file_pages] = (unsigned long)orig_remap_file_pages;*/
 
     setback_cr0(orig_cr0);
  	netlink_release();  	

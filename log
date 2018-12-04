@@ -1,0 +1,6 @@
+cpegg(1000) syscall_test(4557) 2018-12-04 14:57:46 "/root/TestAudit" failed
+cpegg(1000) syscall_test(4557) 2018-12-04 14:57:46 "USER's SECRET
+" 16 success, fd=3
+cpegg(1000) syscall_test(4557) 2018-12-04 14:57:46 "USER's SECRET
+" 16 success, fd=3
+cpegg(1000) syscall_test(4557) 2018-12-04 14:57:46 "/root/TestAudit" Read/Write failed

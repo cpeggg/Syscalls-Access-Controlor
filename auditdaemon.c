@@ -43,8 +43,9 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
 	//Used for read
 	char *content;
     int count;
+    int fd;
     //Used for open
-    char openresult[10];
+    char openresult[20];
     char opentype[16];
     char* file_path;
     int flags;
@@ -64,10 +65,11 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
 
 	switch (syscall){
     case 0:
+        fd = va_arg(pArgs, int);
         content = va_arg(pArgs, char*);
         count = va_arg(pArgs, int);
         ret = va_arg(pArgs, int);
-		if (ret > 0) strcpy(openresult,"success");
+		if (ret > 0) snprintf(openresult, 20, "success, fd=%d", fd);
 	        else strcpy(openresult,"failed");
         fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
         printf("%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
@@ -81,7 +83,7 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
         file_path = va_arg(pArgs, char*);
         flags = va_arg(pArgs, int); 
         ret = va_arg(pArgs, int);
-	    if (ret > 0) strcpy(openresult,"success");
+	    if (ret > 0) snprintf(openresult, 20, "success, fd=%d", ret);
 	        else strcpy(openresult,"failed");
         if (flags & O_WRONLY ) strcpy(opentype, "Write");
 	        else if (flags & O_RDWR ) strcpy(opentype, "Read/Write");
@@ -163,16 +165,17 @@ void intdeal_func(){
     exit(0);
 }
 void LogRead(struct nlmsghdr *nlh){
-    unsigned int uid, pid, ret, count;
+    unsigned int uid, pid, ret, count,fd;
     char* content;
     char* commandname;
     uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh)  );
     pid = *( 2 + (int *)NLMSG_DATA(nlh)   );
-    ret = *( 3 + (int *)NLMSG_DATA(nlh)   );
-    count = *( 4 + (int *)NLMSG_DATA(nlh) );
-    commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh) );
-    content = (char *)( 5 + 16/4 + (int *)NLMSG_DATA(nlh) );
-    Log(commandname, uid,pid, 0, content, count, ret);
+    fd = *(3 + (int *)NLMSG_DATA(nlh));
+    ret = *( 4 + (int *)NLMSG_DATA(nlh)   );
+    count = *( 5 + (int *)NLMSG_DATA(nlh) );
+    commandname = (char *)( 6 + (int *)NLMSG_DATA(nlh) );
+    content = (char *)( 6 + 16/4 + (int *)NLMSG_DATA(nlh) );
+    Log(commandname, uid,pid, 0, fd, content, count, ret);
     return ;
 }
 void LogWrite(struct nlmsghdr *nlh){
@@ -256,43 +259,43 @@ int main(int argc, char *argv[]){
         syscall = *( (unsigned int *)NLMSG_DATA(nlh)  );
         switch (syscall){
             case 0:
-                printf("[*]DEBUG: LogRead()\n");
+                printf("\n[*]DEBUG: LogRead()\n");
                 LogRead(nlh);
                 break;
             case 1:
-                printf("[*]DEBUG: LogWrite()\n");
+                printf("\n[*]DEBUG: LogWrite()\n");
                 LogWrite(nlh);
                 break;
             case 2:
-                printf("[*]DEBUG: LogOpen()\n");
+                printf("\n[*]DEBUG: LogOpen()\n");
                 LogOpen(nlh);
                 break;
             case 9:
-                printf("[*]DEBUG: LogMmap()\n");
+                printf("\n[*]DEBUG: LogMmap()\n");
                 LogMmap(nlh);
                 break;
             case 10:
-                printf("[*]DEBUG: LogMprotect()\n");
+                printf("\n[*]DEBUG: LogMprotect()\n");
                 LogMprotect(nlh);
                 break;
             case 59:
-                printf("[*]DEBUG: LogExecve()\n");
+                printf("\n[*]DEBUG: LogExecve()\n");
                 LogExecve(nlh);
                 break;
             case 85:
-                printf("[*]DEBUG: LogCreat()\n");
+                printf("\n[*]DEBUG: LogCreat()\n");
                 LogCreat(nlh);
                 break;
             case 216:
-                printf("[*]DEBUG: LogRemapFilePages()\n");
+                printf("\n[*]DEBUG: LogRemapFilePages()\n");
                 LogRemapFilePages(nlh);
                 break;
             case 257:
-                printf("[*]DEBUG: LogOpenat()\n");
+                printf("\n[*]DEBUG: LogOpenat()\n");
                 LogOpenat(nlh);
                 break;
             default:
-                printf("[-]ERROR: wrong packet format, NLMSG_DATA(nlh): ");
+                printf("\n[-]ERROR: wrong packet format, NLMSG_DATA(nlh): ");
                 write(1,NLMSG_DATA(nlh),0x100);
                 break;
         }
