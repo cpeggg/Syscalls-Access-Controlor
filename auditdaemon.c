@@ -74,10 +74,15 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
         fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
         printf("%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
         break;	
-
-        break;
     case 1:
-
+        fd = va_arg(pArgs, int);
+        content = va_arg(pArgs, char*);
+        count = va_arg(pArgs, int);
+        ret = va_arg(pArgs, int);
+        if (ret > 0) snprintf(openresult, 20, "success, fd=%d", fd);
+            else strcpy(openresult,"failed");
+        fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
+        printf("%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
         break;
     case 2:
         file_path = va_arg(pArgs, char*);
@@ -179,6 +184,17 @@ void LogRead(struct nlmsghdr *nlh){
     return ;
 }
 void LogWrite(struct nlmsghdr *nlh){
+    unsigned int uid, pid, ret, count, fd;
+    char* content;
+    char* commandname;
+    uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh)  );
+    pid = *( 2 + (int *)NLMSG_DATA(nlh)  );
+    fd = *(3 + (int *)NLMSG_DATA(nlh));
+    ret = *( 4 + (int *)NLMSG_DATA(nlh)   );
+    count = *( 5 + (int *)NLMSG_DATA(nlh) );
+    commandname = (char *)( 6 + (int *)NLMSG_DATA(nlh) );
+    content = (char *)( 6 + 16/4 + (int *)NLMSG_DATA(nlh) );
+    Log(commandname, uid,pid, 1, fd, content, count, ret);
     return ;
 }
 void LogOpen(struct nlmsghdr *nlh){

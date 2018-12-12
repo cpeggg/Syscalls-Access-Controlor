@@ -26,7 +26,7 @@ void netlink_init(void);
 extern int AuditOpen(const char *pathname, int flags, int ret);
 extern int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret);
 extern int AuditRead(const char* content, int fd, size_t count, ssize_t ret); 
-
+extern int AuditWrite(const char* content, int fd, size_t count, ssize_t ret);
 void *get_sys_call_table(void);
 #ifdef _X86_
 unsigned int clear_and_return_cr0(void);
@@ -79,11 +79,13 @@ asmlinkage ssize_t hook_read(int fd, void *buf, size_t count){
 }
 asmlinkage ssize_t hook_write(int fd, const void *buf, size_t count){
     void *bufferSDTHook=kzalloc(count,GFP_ATOMIC);
+    ssize_t ret;
     copy_from_user(bufferSDTHook, buf, count);
+    ret = orig_write(fd, buf, count);
     // Apply content analysis
-    // ...
+    AuditWrite(bufferSDTHook,fd,count,ret);
     kfree(bufferSDTHook);
-    return orig_write(fd, buf, count);
+    return ret;
 }
 asmlinkage long hook_open(const char *pathname, int flags, mode_t mode)
 {
@@ -153,10 +155,10 @@ static int __init audit_init(void)
     //Hook Sys Call Read
     orig_read = (void*)sys_call_table[__NR_read];
     sys_call_table[__NR_read] = (unsigned long)&hook_read;
-    /*
     //Hook Sys Call Write
     orig_write = (void*)sys_call_table[__NR_write];
     sys_call_table[__NR_write] = (unsigned long)&hook_write;
+    /*
     //Hook Sys Call Mmap 
     orig_mmap = (void*)sys_call_table[__NR_mmap];
     sys_call_table[__NR_mmap] = (unsigned long)&hook_mmap;
@@ -197,8 +199,8 @@ static void __exit audit_exit(void)
     orig_cr0 = clear_and_return_cr0();
 	
     sys_call_table[__NR_open] = (unsigned long)orig_open;
-    sys_call_table[__NR_read] = (unsigned long)orig_read;/*
-    sys_call_table[__NR_write] = (unsigned long)orig_write;
+    sys_call_table[__NR_read] = (unsigned long)orig_read;
+    sys_call_table[__NR_write] = (unsigned long)orig_write;/*
     sys_call_table[__NR_mmap] = (unsigned long)orig_mmap;
     sys_call_table[__NR_mprotect] = (unsigned long)orig_mprotect;*/
     sys_call_table[__NR_execve] = (unsigned long)orig_execve;
