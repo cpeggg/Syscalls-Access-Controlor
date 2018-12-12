@@ -4,10 +4,12 @@
 #include <net/netlink.h>
 #include <linux/sched.h>
 #include <linux/fs_struct.h>
+#include <linux/fdtable.h>
 
 #define TASK_COMM_LEN 16
 #define NETLINK_TEST 29
 #define AUDITPATH "/root/TestAudit"
+#define AUDITCREATPATH "/root/TestAuditCreat"
 #define CONTENTAUDIT "USER's SECRET"
 #define MAX_LENGTH 256
 static u32 pid=0;
@@ -74,7 +76,6 @@ int AuditWrite(const char* content, int fd, size_t count, ssize_t ret){
     char commandname[TASK_COMM_LEN];
     unsigned int size;
     void* buffer;
-    void* needle;
     if (strcmp(current->comm, "syscall_test") )
         return 1;
     strncpy(commandname, current->comm, TASK_COMM_LEN);
@@ -97,11 +98,41 @@ int AuditRead(const char* content, int fd, size_t count, ssize_t ret){
     unsigned int size;
     void* buffer;
     void*needle;
+/*
+    char *tmp;
+    char *pathname;
+    struct file* file;
+    struct path* path;
+*/
     //in case the root/user process related to read dmesg
     if (current->cred->uid.val==0 || !strcmp(current->comm, "in:imklog") || !strcmp(current->comm, "gnome-terminal-") || !(needle=strstr(content,CONTENTAUDIT))) 
         return 1;
-    //printk(KERN_DEBUG"current->comm: %s",current->comm);
     
+    /*
+    file = fcheck_files(current->files, fd);
+    if (!file) return -ENOENT;
+    path = &file->f_path;
+    path_get(path);
+    tmp = (char *)__get_free_page(GFP_KERNEL);
+    if (!tmp) {
+            path_put(path);
+            return -ENOMEM;
+    }
+    pathname = d_path(path, tmp, PAGE_SIZE);
+    path_put(path);
+    printk(KERN_DEBUG"pathname: %s",pathname);
+    if (IS_ERR(pathname)) {
+            free_page((unsigned long)tmp);
+            return PTR_ERR(pathname);
+    }
+    // do something here with pathname 
+    free_page((unsigned long)tmp);
+    */
+
+
+
+
+
     strncpy(commandname,current->comm,TASK_COMM_LEN);
 	size = 8 + strlen(content) + 16 + TASK_COMM_LEN + 1;
 	buffer = kzalloc(size, 0);
@@ -148,10 +179,8 @@ int AuditOpen(const char *pathname,int flags, int ret)
     void * buffer; // = kmalloc(size, 0);     
 	memset(fullname, 0, 256);
 	get_fullname(pathname, fullname);
-
     // Access control
     if (strncmp(fullname,AUDITPATH,15) != 0) return 1; 
-
     // Security Audition
 	strncpy(commandname,current->comm,TASK_COMM_LEN);
 	size = 4 + strlen(fullname) + 16 + TASK_COMM_LEN + 1;
@@ -167,8 +196,29 @@ int AuditOpen(const char *pathname,int flags, int ret)
     kfree(buffer);
     return 0;
 }
-   
 
+int AuditCreat(const char*pathname, mode_t mode, int ret){
+    char commandname[TASK_COMM_LEN];
+    char fullname[256];
+    unsigned int size;
+    void * buffer;
+    memset(fullname, 0,256);
+    get_fullname(pathname, fullname);
+    if (strncmp(fullname, AUDITCREATPATH, 15) !=0 ) return 1;
+    strncpy(commandname, current->comm, TASK_COMM_LEN);
+    size = 4 + strlen(fullname) + 16 + TASK_COMM_LEN + 1;
+    buffer = kzalloc(size, 0);
+    *((int*)buffer) = 85;
+    *((int*)buffer + 1) = current->cred->uid.val;
+    *((int*)buffer + 2) = current->pid;
+    *((int*)buffer + 3) = mode;
+    *((int*)buffer + 4) = ret;
+    strcpy( (char*)( 5 + (int*)buffer  ), commandname );
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer  ), fullname );
+    netlink_sendmsg(buffer, size);
+    kfree(buffer);
+    return 0;
+}
 void nl_data_ready(struct sk_buff *__skb)
  {
 	struct sk_buff *skb;

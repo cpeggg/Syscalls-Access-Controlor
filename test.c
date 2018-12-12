@@ -22,7 +22,7 @@ int main(int argc, char*argv[], char *envp[]){
     write(1,buf,0x10);//SYSCALL TEST
     close(fileFd);
 
-    int creatFd=creat("./test_creat",0664);
+    int creatFd=creat("/root/TestAuditCreat",0664);
     write(creatFd,buf,0x10);//SYSCALL TEST
     close(creatFd);
 

@@ -27,6 +27,8 @@ extern int AuditOpen(const char *pathname, int flags, int ret);
 extern int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret);
 extern int AuditRead(const char* content, int fd, size_t count, ssize_t ret); 
 extern int AuditWrite(const char* content, int fd, size_t count, ssize_t ret);
+extern int AuditCreat(const char* pathname, mode_t mode, ssize_t ret);
+
 void *get_sys_call_table(void);
 #ifdef _X86_
 unsigned int clear_and_return_cr0(void);
@@ -100,17 +102,10 @@ asmlinkage long hook_open(const char *pathname, int flags, mode_t mode)
     kfree(bufferSDTHook);
   	return ret; 
 }
-asmlinkage void* hook_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset){
-    // Apply var analysis
-    return orig_mmap(addr, length, prot, flags, fd, offset);
-}
-asmlinkage long hook_mprotect(void *addr, size_t len, int prot){
-    // Apply var analysis
-    return orig_mprotect(addr, len, prot);
-}
 asmlinkage long hook_execve(const char *filename, char *const argv[], char *const envp[]){
     long ret;
     void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
+
     if( filename == NULL ) return -1; 
     // To secure from crash (SMAP protect)
     copy_from_user(bufferSDTHook,filename,MAX_LENGTH);
@@ -121,19 +116,14 @@ asmlinkage long hook_execve(const char *filename, char *const argv[], char *cons
     return ret;
 }
 asmlinkage long hook_creat(const char *pathname, mode_t mode){
+    long ret;
     void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
+    if (pathname == NULL) return -1;
     copy_from_user(bufferSDTHook,pathname,MAX_LENGTH);
+    ret = orig_creat(pathname, mode);
+    AuditCreat(bufferSDTHook, mode, ret);
     kfree(bufferSDTHook);
-    return orig_creat(pathname, mode);
-}
-asmlinkage long hook_openat(int dirfd, const char *pathname, int flags, mode_t mode){
-    void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
-    copy_from_user(bufferSDTHook,pathname,MAX_LENGTH);
-    kfree(bufferSDTHook);
-    return orig_openat(dirfd, pathname, flags, mode);
-}
-asmlinkage long hook_remap_file_pages(void *addr, size_t size, int prot, size_t pgoff, int flags){
-    return orig_remap_file_pages(addr, size, prot, pgoff, flags);
+    return ret;
 }
 
 static int __init audit_init(void)
@@ -158,27 +148,12 @@ static int __init audit_init(void)
     //Hook Sys Call Write
     orig_write = (void*)sys_call_table[__NR_write];
     sys_call_table[__NR_write] = (unsigned long)&hook_write;
-    /*
-    //Hook Sys Call Mmap 
-    orig_mmap = (void*)sys_call_table[__NR_mmap];
-    sys_call_table[__NR_mmap] = (unsigned long)&hook_mmap;
-    //Hook Sys Call Mprotect
-    orig_mprotect = (void*)sys_call_table[__NR_mprotect];
-    sys_call_table[__NR_mprotect] = (unsigned long)&hook_mprotect;*/
     //Hook Sys Call Execve
     orig_execve = (void*)sys_call_table[__NR_execve];
     sys_call_table[__NR_execve] = (unsigned long)&hook_execve;
-    /*
     //Hook Sys Call Creat
     orig_creat = (void*)sys_call_table[__NR_creat];
     sys_call_table[__NR_creat] = (unsigned long)&hook_creat;
-    //Hook Sys Call Openat
-    orig_openat = (void*)sys_call_table[__NR_openat];
-    sys_call_table[__NR_openat] = (unsigned long)&hook_openat;
-    //Hook Sys Call Remap_file_pages
-    orig_remap_file_pages = (void*)sys_call_table[__NR_remap_file_pages];
-    sys_call_table[__NR_remap_file_pages] = (unsigned long)&hook_remap_file_pages;
-    */
 
     setback_cr0(orig_cr0);
 	
@@ -200,15 +175,9 @@ static void __exit audit_exit(void)
 	
     sys_call_table[__NR_open] = (unsigned long)orig_open;
     sys_call_table[__NR_read] = (unsigned long)orig_read;
-    sys_call_table[__NR_write] = (unsigned long)orig_write;/*
-    sys_call_table[__NR_mmap] = (unsigned long)orig_mmap;
-    sys_call_table[__NR_mprotect] = (unsigned long)orig_mprotect;*/
+    sys_call_table[__NR_write] = (unsigned long)orig_write;
     sys_call_table[__NR_execve] = (unsigned long)orig_execve;
-    /*
     sys_call_table[__NR_creat] = (unsigned long)orig_creat;
-    sys_call_table[__NR_openat] = (unsigned long)orig_openat;
-    sys_call_table[__NR_remap_file_pages] = (unsigned long)orig_remap_file_pages;*/
-
     setback_cr0(orig_cr0);
  	netlink_release();  	
     printk(KERN_INFO "Module exit.\n");

@@ -51,6 +51,8 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
     int flags;
     //Used for execve
     char *execve_path;
+    //Used for creat;
+    int mode;
 
 	va_list pArgs;  //定义va_list类型的指针pArgs，用于存储参数地址
     va_start(pArgs, syscall); //初始化pArgs指针，使其指向第一个可变参数。该宏第二个参数是变参列表的前一个参数，即最后一个固定参数
@@ -96,10 +98,6 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
         fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
         printf("%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
         break;
-    case 9:
-        break;
-    case 10:
-        break;
     case 59:
         execve_path = va_arg(pArgs, char*);
         ret = va_arg(pArgs, int);
@@ -109,10 +107,14 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
         printf("%s(%d) %s(%d) %s \"%s\" %s\n",username,uid,commandname,pid,logtime,execve_path, openresult);	
         break;
     case 85:
-        break;
-    case 216:
-        break;
-    case 257:
+        file_path = va_arg(pArgs, char*);
+        mode = va_arg(pArgs, int);
+        ret = va_arg(pArgs, int);
+        if (ret > 0) snprintf(openresult, 20, "success, fd=%d", ret);
+            else strcpy(openresult, "failed");
+        fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,file_path,mode, openresult);
+        printf("%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,file_path,mode, openresult);
+
         break;
     }
 	va_end(pArgs);  //将指针pArgs置为无效，结束变参的获取
@@ -210,12 +212,6 @@ void LogOpen(struct nlmsghdr *nlh){
     Log(commandname, uid,pid, 2, file_path,flags,ret);
     return ;
 }
-void LogMmap(struct nlmsghdr *nlh){
-    return ;
-}
-void LogMprotect(struct nlmsghdr *nlh){
-    return ;
-}
 void LogExecve(struct nlmsghdr *nlh){
     unsigned int uid, pid, ret;
     char *file_path;
@@ -228,16 +224,20 @@ void LogExecve(struct nlmsghdr *nlh){
     Log(commandname, uid,pid, 59, file_path, ret);
     return ;
 }
-void LogCreat(struct nlmsghdr *nlh){
-    return ;
-}
-void LogRemapFilePages(struct nlmsghdr *nlh){
-    return ;
-}
-void LogOpenat(struct nlmsghdr *nlh){
-    return ;
-}
 
+void LogCreat(struct nlmsghdr *nlh){
+    unsigned int uid, pid, ret,mode;
+    char *file_path;
+    char *commandname;
+    uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh)  );
+    pid = *( 2 + (int *)NLMSG_DATA(nlh)   );
+    mode = *( 3 + (int *)NLMSG_DATA(nlh)   );
+    ret = *( 4 + (int *)NLMSG_DATA(nlh)   );
+    commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh)  );
+    file_path = (char *)( 5 + 16/4 + (int *)NLMSG_DATA(nlh)  );
+    Log(commandname, uid,pid, 85, file_path, mode, ret);
+    return ;
+}
 
 int main(int argc, char *argv[]){
 	char buff[110];
@@ -286,14 +286,6 @@ int main(int argc, char *argv[]){
                 printf("\n[*]DEBUG: LogOpen()\n");
                 LogOpen(nlh);
                 break;
-            case 9:
-                printf("\n[*]DEBUG: LogMmap()\n");
-                LogMmap(nlh);
-                break;
-            case 10:
-                printf("\n[*]DEBUG: LogMprotect()\n");
-                LogMprotect(nlh);
-                break;
             case 59:
                 printf("\n[*]DEBUG: LogExecve()\n");
                 LogExecve(nlh);
@@ -301,14 +293,6 @@ int main(int argc, char *argv[]){
             case 85:
                 printf("\n[*]DEBUG: LogCreat()\n");
                 LogCreat(nlh);
-                break;
-            case 216:
-                printf("\n[*]DEBUG: LogRemapFilePages()\n");
-                LogRemapFilePages(nlh);
-                break;
-            case 257:
-                printf("\n[*]DEBUG: LogOpenat()\n");
-                LogOpenat(nlh);
                 break;
             default:
                 printf("\n[-]ERROR: wrong packet format, NLMSG_DATA(nlh): ");
