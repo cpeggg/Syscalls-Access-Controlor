@@ -1,6 +1,0 @@
-cpegg(1000) syscall_test(3798) 2018-12-12 08:40:40 "/root/TestAudit" failed
-cpegg(1000) syscall_test(3798) 2018-12-12 08:40:40 "USER's SECRET
-" 16 success, fd=3
-cpegg(1000) syscall_test(3798) 2018-12-12 08:40:40 "USER's SECRET
-" 16 success, fd=3
-cpegg(1000) syscall_test(3798) 2018-12-12 08:40:40 "/root/TestAudit" Read/Write failed
