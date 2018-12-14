@@ -18,8 +18,9 @@ CREAT 85 `int creat(const char *pathname, mode_t mode);`
 
 ## ACCESS CONTROL
 
-In our demo, we gonna add 2 users and 1 group, so their are 3 users and 2 groups in total:
+In our demo, we gonna add 2 users and 1 group, so their are 3 users and 2 groups in test:
 - cpegg: user, uid=1000(cpegg), gid=1000(cpegg)
 - test\_cpegg: user, uid=1001(test\_cpegg), gid=1000(cpegg)
 - test\_cpegg2: user, uid=1002(test\_cpegg2) gid=1001(cpegg2)
-- cpegg2: group, gid=1000(cpegg2)
+- cpegg: group, gid=1000(cpegg)
+- cpegg2: group, gid=1001(cpegg2)
