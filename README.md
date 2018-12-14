@@ -28,5 +28,6 @@ This 3 file are set by `chmod 777 <file>` to make them accessable to all users i
 To show the access control deployed on the users and groups, we will apply the following rules:
 1. cpegg can open/read/write/creat/execve
 2. test\_cpegg cannot open/read/write/creat/execve, to show the access control deployed according to the uid
-3. test\_cpegg2
+3. test\_cpegg2 cannot open/read/write/creat/execve, to show the Access control deployed according to the gid
 4. test\_cpegg3 cannot read/write given content from/to the file, but can have other controls to these files
+5. test\_cpegg4 can open/read/write/creat/execve, to show when the access control has been deployed to both uid and gid, the control deployed on uid will be on primary compared to control deployed on gid.
