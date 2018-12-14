@@ -1,7 +1,7 @@
 /*************************************************************************
 	> File Name: test.c
-	> Author: 
-	> Mail: 
+	> Author: cpegg
+	> Mail: cpeggg@gmail.com
 	> Created Time: Sun 25 Nov 2018 11:41:01 PM PST
  ************************************************************************/
 // Used for test each syscall's functionality
