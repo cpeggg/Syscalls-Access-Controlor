@@ -15,6 +15,7 @@
 #include <linux/slab.h>
 #define MAX_LENGTH 256
 #define BUFFER_INIT_SIZE 0x10000
+#define EACDENIED -
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("cpegg");
@@ -23,11 +24,17 @@ MODULE_VERSION("0.01");
 
 void netlink_release(void);
 void netlink_init(void);
-extern int AuditOpen(const char *pathname, int flags, int ret);
-extern int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret);
-extern int AuditRead(const char* content, int fd, size_t count, ssize_t ret); 
-extern int AuditWrite(const char* content, int fd, size_t count, ssize_t ret);
-extern int AuditCreat(const char* pathname, mode_t mode, ssize_t ret);
+extern int AuditOpen(const char *pathname, int flags, int ret, int ACret);
+extern int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret, int ACret);
+extern int AuditRead(const char* content, int fd, size_t count, ssize_t ret, int ACret); 
+extern int AuditWrite(const char* content, int fd, size_t count, ssize_t ret, int ACret);
+extern int AuditCreat(const char* pathname, mode_t mode, ssize_t ret, int ACret);
+
+extern int ACRead(int fd, void* buf, size_t count);
+extern int ACOpen(const char*filename, int flags, mode_t mode);
+extern int ACExecve(const char* filename, char *const argv[], char* const envp[]);
+extern int ACWrite(int fd, const void* buf, size_t count);
+extern int ACCreat(const char * pathname, mode_t mode);
 
 void *get_sys_call_table(void);
 #ifdef _X86_
@@ -69,23 +76,31 @@ asmlinkage int (* orig_remap_file_pages)(void *addr, size_t size, int prot, size
 
 asmlinkage ssize_t hook_read(int fd, void *buf, size_t count){
     ssize_t ret;
+    int ACret=0;
     void *bufferSDTHook=kzalloc(count,GFP_ATOMIC);
+
     ret = orig_read(fd, buf, count);
-    if (ret>=0){
+    if (ret>=0)
         copy_from_user(bufferSDTHook, buf, ret); // to avoid copy \0 to userspace when ret < count
-        // To Apply analysis
-        AuditRead(bufferSDTHook,fd,count,ret);
-    }
+    ACret = ACRead(fd, bufferSDTHook, count);
+    if (ACret)
+        ret = -1;
+    AuditRead(bufferSDTHook,fd,count,ret, ACret);
     kfree(bufferSDTHook);
     return ret;
 }
 asmlinkage ssize_t hook_write(int fd, const void *buf, size_t count){
     void *bufferSDTHook=kzalloc(count,GFP_ATOMIC);
     ssize_t ret;
+    int ACret=0;
     copy_from_user(bufferSDTHook, buf, count);
-    ret = orig_write(fd, buf, count);
+    ACret = ACWrite(fd, bufferSDTHook, count);
+    if (ACret)
+        ret = -1;
+    else
+        ret = orig_write(fd, buf, count);
     // Apply content analysis
-    AuditWrite(bufferSDTHook,fd,count,ret);
+    AuditWrite(bufferSDTHook,fd,count,ret, ACret);
     kfree(bufferSDTHook);
     return ret;
 }
@@ -93,35 +108,50 @@ asmlinkage long hook_open(const char *pathname, int flags, mode_t mode)
 {
 	long ret;
     void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
+    int ACret=0;
     if( pathname == NULL ) return -1; 
     // To secure from crash (SMAP protect)
     copy_from_user(bufferSDTHook,pathname,MAX_LENGTH);
 	// Time for access control
-    ret = orig_open(pathname, flags, mode);
-  	AuditOpen(bufferSDTHook,flags,ret);
+    ACret = ACOpen(bufferSDTHook, flags, mode);
+    if (ACret)
+        ret = -1;
+    else 
+        ret = orig_open(pathname, flags, mode);
+  	AuditOpen(bufferSDTHook,flags,ret, ACret);
     kfree(bufferSDTHook);
   	return ret; 
 }
 asmlinkage long hook_execve(const char *filename, char *const argv[], char *const envp[]){
     long ret;
+    int ACret=0;
     void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
 
     if( filename == NULL ) return -1; 
     // To secure from crash (SMAP protect)
     copy_from_user(bufferSDTHook,filename,MAX_LENGTH);
 	// Time for access control
-    ret = orig_execve(filename, argv, envp);
-    AuditExecve(bufferSDTHook, argv, envp, ret);
+    ACret = ACExecve(bufferSDTHook, argv, envp);
+    if (ACret)
+        ret = -1;
+    else
+        ret = orig_execve(filename, argv, envp);
+    AuditExecve(bufferSDTHook, argv, envp, ret, ACret);
     kfree(bufferSDTHook);
     return ret;
 }
 asmlinkage long hook_creat(const char *pathname, mode_t mode){
     long ret;
+    int ACret=0;
     void *bufferSDTHook=kzalloc(MAX_LENGTH,GFP_ATOMIC);
     if (pathname == NULL) return -1;
     copy_from_user(bufferSDTHook,pathname,MAX_LENGTH);
-    ret = orig_creat(pathname, mode);
-    AuditCreat(bufferSDTHook, mode, ret);
+    ACret = ACCreat(pathname, mode);
+    if (ACret)
+        ret = -1;
+    else
+        ret = orig_creat(pathname, mode);
+    AuditCreat(bufferSDTHook, mode, ret, ACret);
     kfree(bufferSDTHook);
     return ret;
 }

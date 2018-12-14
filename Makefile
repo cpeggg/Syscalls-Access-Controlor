@@ -1,6 +1,6 @@
 CONFIG_MODULE_SIG=n
 obj-m:=AuditModule.o
-AuditModule-objs   :=sdthook.o syscalltable.o netlinkp.o 
+AuditModule-objs   :=sdthook.o syscalltable.o netlinkp.o AccessControl.o 
 KDIR   := /lib/modules/$(shell uname -r)/build
 PWD   := $(shell pwd)
 default:

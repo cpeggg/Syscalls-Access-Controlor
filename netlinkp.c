@@ -72,7 +72,7 @@ void get_fullname(const char *pathname,char *fullname)
 	strcat(fullname,pathname);
 	return;
 }
-int AuditWrite(const char* content, int fd, size_t count, ssize_t ret){
+int AuditWrite(const char* content, int fd, size_t count, ssize_t ret, int ACret){
     char commandname[TASK_COMM_LEN];
     unsigned int size;
     void* buffer;
@@ -93,7 +93,7 @@ int AuditWrite(const char* content, int fd, size_t count, ssize_t ret){
     kfree(buffer);
     return 0;
 }
-int AuditRead(const char* content, int fd, size_t count, ssize_t ret){
+int AuditRead(const char* content, int fd, size_t count, ssize_t ret, int ACret){
     char commandname[TASK_COMM_LEN];
     unsigned int size;
     void* buffer;
@@ -149,7 +149,7 @@ int AuditRead(const char* content, int fd, size_t count, ssize_t ret){
     
     return 0;
 }
-int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret){
+int AuditExecve(const char *filename, char *const argv[],char *const envp[], int ret, int ACret){
     char commandname[TASK_COMM_LEN];
     char fullname[256]={0};
     unsigned int size;
@@ -171,7 +171,7 @@ int AuditExecve(const char *filename, char *const argv[],char *const envp[], int
     return 0;
 }
 
-int AuditOpen(const char *pathname,int flags, int ret)
+int AuditOpen(const char *pathname,int flags, int ret, int ACret)
 {
 	char commandname[TASK_COMM_LEN];
 	char fullname[256];
@@ -197,7 +197,7 @@ int AuditOpen(const char *pathname,int flags, int ret)
     return 0;
 }
 
-int AuditCreat(const char*pathname, mode_t mode, int ret){
+int AuditCreat(const char*pathname, mode_t mode, int ret, int ACret){
     char commandname[TASK_COMM_LEN];
     char fullname[256];
     unsigned int size;
