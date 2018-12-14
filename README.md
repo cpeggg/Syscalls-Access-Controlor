@@ -21,7 +21,7 @@ In our demo, we gonna add 4 users and 1 group, so their are 3 users and 2 groups
 - cpegg: group, gid=1000(cpegg)
 - cpegg2: group, gid=1001(cpegg2)
 
-In this demo, the users will try to open/read/write /tmp/ioTest, try to creat /tmp/creatTest and try to execve /tmp/execTest.
+In this demo, the users will try to open/read/write `/tmp/ioTest`, try to creat `/tmp/creatTest` and try to execve `/tmp/execTest`.
 
 This 3 file are set by `chmod 777 <file>` to make them accessable to all users in advance. Then, the system is deployed and we will check whether the users/groups can have corresponding access to these files
 
