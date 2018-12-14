@@ -13,11 +13,37 @@
 #include <pwd.h>
 #include <grp.h>
 int main(int argc, char*argv[], char *envp[]){
-    printf("----------------SYSCALL TEST----------------\n");
+    int fd,creatfd,execret;
+    char buf[0x20];
+    printf("\n----------------SYSCALL TEST----------------\n");
     printf("---------------PERSONAL INFO----------------\n");
     printf("UID:%d\t\tPID:%d\t\t\n",getuid(),getgid());
     printf("USERNAME:%s\t\tGROUPNAME:%s\t\t\n",getpwuid(getuid())->pw_name,getgrgid(getgid())->gr_name);
-    printf("--------------------------------------------\n");
+    printf("------------------IO TEST-------------------\n");
+    fd = open("/tmp/ioTest",O_RDWR);
+    if (fd<0)
+        puts("open failed");
+    else{
+        puts("open success");
+        if (read(fd, buf, 0x20)>0)
+            puts("read success");
+        else
+            puts("read failed");
+        if (printf("%s",buf)>0)
+            puts("write success");
+        else
+            puts("write failed");
+    }
+    creatfd=creat("/tmp/creatTest",0777);
+    if (creatfd<0)
+        puts("creat failed");
+    else
+        puts("creat success");
+    execret=execve("/tmp/execTest",NULL,NULL);
+    if (execret)
+        puts("execve failed");
+    else
+        puts("execve success");
     return 0;
 }
 

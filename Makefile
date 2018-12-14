@@ -6,7 +6,7 @@ PWD   := $(shell pwd)
 default:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
 	gcc auditdaemon.c -o auditdaemon
-	gcc test.c -o syscall_test
+	gcc -Wno-nonnull test.c -o syscall_test
 	gcc execTest.c -o execTest
 	chmod 777 execTest
 	echo "USER's SECRET" > /tmp/ioTest
