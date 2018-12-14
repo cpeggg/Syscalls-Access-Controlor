@@ -5,11 +5,11 @@ A Linux file audition-related syscall hook. Altered from X86, getting tested on 
 2. Hook execve (No.59)
 
 In a nutshell, the following syscalls are hooked:
--READ 0 `ssize_t read(int fd, void *buf, size_t count);`
--WRITE 1 `ssize_t write(int fd, const void *buf, size_t count);`
--OPEN 2 `int open(const char *pathname, int flags, mode_t mode);` (mode is optional)
--EXECVE 59 `int execve(const char *filename, char *const argv[], char *const envp[]`
--CREAT 85 `int creat(const char *pathname, mode_t mode);`
+- READ 0 `ssize_t read(int fd, void *buf, size_t count);`
+- WRITE 1 `ssize_t write(int fd, const void *buf, size_t count);`
+- OPEN 2 `int open(const char *pathname, int flags, mode_t mode);` (mode is optional)
+- EXECVE 59 `int execve(const char *filename, char *const argv[], char *const envp[]`
+- CREAT 85 `int creat(const char *pathname, mode_t mode);`
 
 ## ACCESS CONTROL
 In our demo, we gonna add 4 users and 1 group, so their are 3 users and 2 groups in test:
