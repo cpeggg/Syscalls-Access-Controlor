@@ -10,23 +10,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <pwd.h>
+#include <grp.h>
 int main(int argc, char*argv[], char *envp[]){
-    //execve("/bin/sh",argv,envp);
-    execve("/root/TestAudit",argv,envp);
-    char buf[0x10];
-    int fileFd=open("./test",O_RDWR|O_CREAT,0664);
-    read(fileFd,buf,0x10);
-    write(1,buf,0x10);//SYSCALL TEST
-    lseek(fileFd,0,SEEK_SET);
-    read(fileFd,buf,0x10);
-    write(1,buf,0x10);//SYSCALL TEST
-    close(fileFd);
-
-    int creatFd=creat("/root/TestAuditCreat",0664);
-    write(creatFd,buf,0x10);//SYSCALL TEST
-    close(creatFd);
-
-    int rootFd=open("/root/TestAudit",O_RDWR);
-    return -22;
+    printf("----------------SYSCALL TEST----------------\n");
+    printf("---------------PERSONAL INFO----------------\n");
+    printf("UID:%d\t\tPID:%d\t\t\n",getuid(),getgid());
+    printf("USERNAME:%s\t\tGROUPNAME:%s\t\t\n",getpwuid(getuid())->pw_name,getgrgid(getgid())->gr_name);
+    printf("--------------------------------------------\n");
+    return 0;
 }
 

@@ -7,10 +7,15 @@ default:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
 	gcc auditdaemon.c -o auditdaemon
 	gcc test.c -o syscall_test
-	echo "USER's SECRET" > test
-	-rm test_creat
+	gcc execTest.c -o execTest
+	chmod 777 execTest
+	echo "USER's SECRET" > /tmp/ioTest
+	mv execTest /tmp/
+
 clean:
-	-$(RM) -rf .*.cmd *.mod.c *.o.* *.ko .tmp* auditdaemon log *.order *.symvers *.o test test_creat syscall_test peda*
+	-$(RM) -rf .*.cmd *.mod.c *.o.* *.ko .tmp* 
+	-$(RM) auditdaemon log *.order *.symvers *.o test test_creat syscall_test peda*
+	-$(RM) /tmp/ioTest /tmp/execTest /tmp/creatTest
 adduser:
 	useradd -u 1001 -g 1000 -d /home/test_cpegg -m test_cpegg
 	useradd -u 1003 -g 1000 -d /home/test_cpegg3 -m test_cpegg3
