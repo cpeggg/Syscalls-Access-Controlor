@@ -12,6 +12,9 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
+#define IOTEST "/tmp/ioTest"
+#define EXECTEST "/tmp/execTest"
+#define CREATEST "/tmp/creatTest"
 int main(int argc, char*argv[], char *envp[]){
     int fd,creatfd,execret;
     char buf[0x20];
@@ -23,7 +26,7 @@ int main(int argc, char*argv[], char *envp[]){
 
     printf("[DEBUG] umask to 0, previous: %o\n",umask(0000));
     printf("[DEBUG] umask to 0, previous: %o\n",umask(0000));
-    fd = open("/tmp/ioTest",O_RDWR|O_CREAT, 0777);
+    fd = open(IOTEST,O_RDWR|O_CREAT, 0777);
     if (fd<0)
         puts("open failed");
     else{
@@ -37,12 +40,12 @@ int main(int argc, char*argv[], char *envp[]){
         else
             puts("write failed");
     }
-    creatfd=creat("/tmp/creatTest", 0777);
+    creatfd=creat(CREATEST, 0777);
     if (creatfd<0)
         puts("creat failed");
     else
         puts("creat success");
-    execret=execve("/tmp/execTest",NULL,NULL);
+    execret=execve(EXECTEST,NULL,NULL);
     if (execret)
         puts("execve failed");
     else

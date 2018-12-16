@@ -48,11 +48,10 @@ void get_fullname(const char *pathname,char *fullname)
 	struct dentry *tmp_dentry = current->fs->pwd.dentry;
 	char tmp_path[MAX_LENGTH];
 	char local_path[MAX_LENGTH];
-	memset(tmp_path,0,MAX_LENGTH);
 	memset(local_path,0,MAX_LENGTH);
 
 	if (*pathname == '/') {
-		strcpy(fullname,pathname);
+		strncpy(fullname,pathname,256);
 		return;
 	}
 
@@ -60,16 +59,12 @@ void get_fullname(const char *pathname,char *fullname)
 	{
 		if (!strcmp(tmp_dentry->d_iname,"/"))
 			break;
-		strcpy(tmp_path,"/");
-		strcat(tmp_path,tmp_dentry->d_iname);
-		strcat(tmp_path,local_path);
-		strcpy(local_path,tmp_path);
+        snprintf(tmp_path,256,"/%s%s",tmp_dentry->d_iname,local_path);
+		strncpy(local_path,tmp_path,256);
 
 		tmp_dentry = tmp_dentry->d_parent;
 	}
-	strcpy(fullname,local_path);
-	strcat(fullname,"/");
-	strcat(fullname,pathname);
+	snprintf(fullname, 256, "%s/%s", local_path, pathname);
 	return;
 }
 int AuditWrite(const char* content, int fd, size_t count, ssize_t ret, int ACret){

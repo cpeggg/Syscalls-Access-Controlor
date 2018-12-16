@@ -168,13 +168,14 @@ static int __init audit_init(void)
     orig_cr0 = clear_and_return_cr0();
     
     sys_call_table = get_sys_call_table();
-    
+   /* 
     //Hook Sys Call Open 
     orig_open = (void*)sys_call_table[__NR_open];
     sys_call_table[__NR_open] = (unsigned long)&hook_open;
     //Hook Sys Call Read
     orig_read = (void*)sys_call_table[__NR_read];
     sys_call_table[__NR_read] = (unsigned long)&hook_read;
+    */
     //Hook Sys Call Write
     orig_write = (void*)sys_call_table[__NR_write];
     sys_call_table[__NR_write] = (unsigned long)&hook_write;
@@ -184,7 +185,6 @@ static int __init audit_init(void)
     //Hook Sys Call Creat
     orig_creat = (void*)sys_call_table[__NR_creat];
     sys_call_table[__NR_creat] = (unsigned long)&hook_creat;
-
     setback_cr0(orig_cr0);
 	
     //Initialize netlink
@@ -202,12 +202,13 @@ static void __exit audit_exit(void)
     unsigned long orig_cr0;
 #endif
     orig_cr0 = clear_and_return_cr0();
-	
+/*	
     sys_call_table[__NR_open] = (unsigned long)orig_open;
-    sys_call_table[__NR_read] = (unsigned long)orig_read;
+    sys_call_table[__NR_read] = (unsigned long)orig_read;*/
     sys_call_table[__NR_write] = (unsigned long)orig_write;
     sys_call_table[__NR_execve] = (unsigned long)orig_execve;
     sys_call_table[__NR_creat] = (unsigned long)orig_creat;
+    
     setback_cr0(orig_cr0);
  	netlink_release();  	
     printk(KERN_INFO "Module exit.\n");
