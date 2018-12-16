@@ -7,6 +7,6 @@
 
 #include<stdio.h>
 int main(){
-    printf("This is the execution of /tmp/execTest.\n");
+    printf("execve success\n");
     return 0;
 }

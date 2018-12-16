@@ -8,9 +8,10 @@ default:
 	gcc auditdaemon.c -o auditdaemon
 	gcc -Wno-nonnull test.c -o syscall_test
 	gcc execTest.c -o execTest
-	chmod 777 execTest
+	chmod 111 execTest
 	echo "USER's SECRET" > /tmp/ioTest
-	mv execTest /tmp/
+	chmod 666 /tmp/ioTest
+	mv -f execTest /tmp/
 
 clean:
 	-$(RM) -rf .*.cmd *.mod.c *.o.* *.ko .tmp* 

@@ -20,12 +20,15 @@ int main(int argc, char*argv[], char *envp[]){
     printf("UID:%d\t\tPID:%d\t\t\n",getuid(),getgid());
     printf("USERNAME:%s\t\tGROUPNAME:%s\t\t\n",getpwuid(getuid())->pw_name,getgrgid(getgid())->gr_name);
     printf("------------------IO TEST-------------------\n");
-    fd = open("/tmp/ioTest",O_RDWR);
+
+    printf("[DEBUG] umask to 0, previous: %o\n",umask(0000));
+    printf("[DEBUG] umask to 0, previous: %o\n",umask(0000));
+    fd = open("/tmp/ioTest",O_RDWR|O_CREAT, 0777);
     if (fd<0)
         puts("open failed");
     else{
         puts("open success");
-        if (read(fd, buf, 0x20)>0)
+        if (read(fd, buf, 0x20)>=0)
             puts("read success");
         else
             puts("read failed");
@@ -34,7 +37,7 @@ int main(int argc, char*argv[], char *envp[]){
         else
             puts("write failed");
     }
-    creatfd=creat("/tmp/creatTest",0777);
+    creatfd=creat("/tmp/creatTest", 0777);
     if (creatfd<0)
         puts("creat failed");
     else
