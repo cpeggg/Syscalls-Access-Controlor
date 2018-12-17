@@ -39,6 +39,9 @@ rmuser:
 	-groupdel cpegg3
 	
 test:
+	sudo cp ./AccessControl.conf /root/
+	sudo chown root /root/AccessControl.conf
+	sudo chmod 644 /root/AccessControl.conf
 	sudo sudo -u cpegg ./syscall_test
 	sudo sudo -u test_cpegg ./syscall_test
 	sudo sudo -u test_cpegg2 ./syscall_test

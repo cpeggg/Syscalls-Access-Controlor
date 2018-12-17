@@ -37,3 +37,24 @@ To show the access control deployed on the users and groups, we will apply the f
 ### Dynamic Access Control
 We deployed the AccessControl.conf, a configure file logging the access list deployed to all users. After following the naming rules mentioned in the configure file, we can add dynamic rules to all users.
 In our demo, we show that we add ban to execve on uid=1005 and gid=1002, which is not included in our static rules hard-coded in the program. Which is a proof of work.
+
+## How to run the demo?
+All command are write to Makefile, to run the demo, type the following command:
+`bash
+sudo make rmuser
+sudo make clean
+sudo make adduser
+make
+sudo insmod AuditModule.ko
+make test
+sudo rmmod AuditModule.ko
+sudo make rmuser
+sudo make clean
+`
+Also, if you want to check the audit function, after insmod the module you can open another terminal and run `./auditdaemon`, then you can see the audit results.
+
+## TODO
+READ(0) Control can only ret -1 but the content has been read to the user buffer.
+
+## Author
+cpegg@2018
