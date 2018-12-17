@@ -29,3 +29,9 @@ rmuser:
 	-userdel -r test_cpegg3
 	-userdel -r test_cpegg4
 	-groupdel cpegg2
+test:
+	sudo sudo -u cpegg ./syscall_test
+	sudo sudo -u test_cpegg ./syscall_test
+	sudo sudo -u test_cpegg2 ./syscall_test
+	sudo sudo -u test_cpegg3 ./syscall_test
+	sudo sudo -u test_cpegg4 ./syscall_test

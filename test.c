@@ -20,7 +20,7 @@ int main(int argc, char*argv[], char *envp[]){
     char buf[0x20];
     printf("\n----------------SYSCALL TEST----------------\n");
     printf("---------------PERSONAL INFO----------------\n");
-    printf("UID:%d\t\tPID:%d\t\t\n",getuid(),getgid());
+    printf("UID:%d\t\tGID:%d\t\t\n",getuid(),getgid());
     printf("USERNAME:%s\t\tGROUPNAME:%s\t\t\n",getpwuid(getuid())->pw_name,getgrgid(getgid())->gr_name);
     printf("------------------IO TEST-------------------\n");
 
