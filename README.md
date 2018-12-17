@@ -40,7 +40,7 @@ In our demo, we show that we add ban to execve on uid=1005 and gid=1002, which i
 
 ## How to run the demo?
 All command are write to Makefile, to run the demo, type the following command:
-`bash
+```bash
 sudo make rmuser
 sudo make clean
 sudo make adduser
@@ -50,7 +50,7 @@ make test
 sudo rmmod AuditModule.ko
 sudo make rmuser
 sudo make clean
-`
+```
 Also, if you want to check the audit function, after insmod the module you can open another terminal and run `./auditdaemon`, then you can see the audit results.
 
 ## TODO
