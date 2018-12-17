@@ -1,7 +1,7 @@
 # Syscalls Access Controlor
-A Linux file audition-related syscall hook. Altered from X86, getting tested on Ubuntu 16.04 x64.
+A Linux file audition-related syscall hook, to do audition and access control work. Altered from X86, tested on Ubuntu 16.04 x64.
 ## SYSCALL HOOKS
-1. Hook the [syscalls related to fs](http://linasm.sourceforge.net/docs/syscalls/filesystem.php). Simplify the most sensitive syscalls in file audition and [Control Flow Integrity](https://www.cc.gatech.edu/~hhu86/papers/ucfi.pdf)
+1. Hook the [syscalls related to fs](http://linasm.sourceforge.net/docs/syscalls/filesystem.php). Simplify the most sensitive syscalls in file audition.
 2. Hook execve (No.59)
 
 In a nutshell, the following syscalls are hooked:
