@@ -36,6 +36,8 @@ extern int ACExecve(const char* filename, char *const argv[], char* const envp[]
 extern int ACWrite(int fd, const void* buf, size_t count);
 extern int ACCreat(const char * pathname, mode_t mode);
 
+extern int parsemain(const char* path);
+
 void *get_sys_call_table(void);
 #ifdef _X86_
 unsigned int clear_and_return_cr0(void);
@@ -162,7 +164,8 @@ static int __init audit_init(void)
     unsigned int orig_cr0;
 #else
     unsigned long orig_cr0;
-#endif    
+#endif   
+    int parseret=0;
     printk("Audit Module Loading...\n");
     
     orig_cr0 = clear_and_return_cr0();
@@ -187,6 +190,12 @@ static int __init audit_init(void)
 	
     //Initialize netlink
     netlink_init();
+    parseret = parsemain("/home/cpegg/Syscalls-Access-Controlor/AccessControl.conf");
+    if (parseret == -1)
+        printk("Configure file not found.\n");
+    else if (parseret==-2)
+        printk("configure file format wrong.\n");
+    else printk("Configure file parse success.\n");
     printk("Audit Module loaded.\n");
     return 0;
 }
