@@ -23,15 +23,27 @@ adduser:
 	groupadd -g 1001 cpegg2
 	useradd -u 1002 -g 1001 -d /home/test_cpegg2 -m test_cpegg2
 	useradd -u 1004 -g 1001 -d /home/test_cpegg4 -m test_cpegg4
+	# test conf
+	useradd -u 1005 -g 1000 -d /home/test_cpegg5 -m test_cpegg5
+	groupadd -g 1002 cpegg3
+	useradd -u 1006 -g 1002 -d /home/test_cpegg6 -m test_cpegg6
 rmuser:
 	-userdel -r test_cpegg
 	-userdel -r test_cpegg2
 	-userdel -r test_cpegg3
 	-userdel -r test_cpegg4
 	-groupdel cpegg2
+	# test conf
+	-userdel -r test_cpegg5
+	-userdel -r test_cpegg6
+	-groupdel cpegg3
+	
 test:
 	sudo sudo -u cpegg ./syscall_test
 	sudo sudo -u test_cpegg ./syscall_test
 	sudo sudo -u test_cpegg2 ./syscall_test
 	sudo sudo -u test_cpegg3 ./syscall_test
 	sudo sudo -u test_cpegg4 ./syscall_test
+	# test conf
+	sudo sudo -u test_cpegg5 ./syscall_test
+	sudo sudo -u test_cpegg6 ./syscall_test

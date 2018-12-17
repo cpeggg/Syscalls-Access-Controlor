@@ -40,7 +40,7 @@ int getuserAC(unsigned int syscall, unsigned int *flag, const char* filename){
             get_fullname(filename, fullname);
             if (strstr(fullname, users[i].string)){
                 *flag=1;
-                return users[i].fpFlag;
+                return users[i].fpFlag-1;
             }
         }
     }
