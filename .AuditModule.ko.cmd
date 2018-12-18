@@ -1,0 +1,1 @@
+cmd_/home/cpegg/Syscalls-Access-Controlor/AuditModule.ko := ld -r -m elf_x86_64 -z max-page-size=0x200000 -T ./scripts/module-common.lds --build-id  -o /home/cpegg/Syscalls-Access-Controlor/AuditModule.ko /home/cpegg/Syscalls-Access-Controlor/AuditModule.o /home/cpegg/Syscalls-Access-Controlor/AuditModule.mod.o ;  true

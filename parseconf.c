@@ -53,7 +53,7 @@ int parse(char* ptr){
     end=strstr(ptr,"\n");
     *end='\0';
     ptr=end+1;
-    printk("parse: %s",base);
+    //printk("parse: %s",base);
     if (!strstr(base,"users ac"))
         return -2;
     do {
@@ -62,7 +62,7 @@ int parse(char* ptr){
         if (!end) break;
         *end='\0';
         ptr=end+1;
-        printk("parse: %s",base);
+        //printk("parse: %s",base);
         if (*base=='\0')
             break;
         if (4!=sscanf(base,"%u %u %u %256s",&id,&syscall,&fpFlag,str)){
@@ -88,11 +88,12 @@ int parse(char* ptr){
             strncpy(groups[groupTop++].string,str,256);
         }
     }while (end);
+    /*
     for (i=0;i<userTop;i++)
         printk("%u %u %u %256s",users[i].id,users[i].syscall, users[i].fpFlag, users[i].string);
     for (i=0;i<groupTop;i++)
         printk("%u %u %u %256s",groups[i].id,groups[i].syscall,groups[i].fpFlag,groups[i].string);
-
+    */
     return 0;
 }
 int parsemain(const char *path){
@@ -100,7 +101,7 @@ int parsemain(const char *path){
     char *ptr=filecontent;
     int ret=-1;
     ret = read_conf(path, filecontent);
-    printk(KERN_DEBUG"filecontent: %s",filecontent);
+    //printk(KERN_DEBUG"filecontent: %s",filecontent);
     if (ret<0)
         return -1;
     else 
