@@ -46,7 +46,7 @@ sudo make clean
 sudo make adduser
 make
 sudo insmod AuditModule.ko
-make test
+./test.sh
 sudo rmmod AuditModule.ko
 sudo make rmuser
 sudo make clean
