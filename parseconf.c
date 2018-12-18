@@ -48,7 +48,7 @@ int parse(char* ptr){
     unsigned int id,syscall,fpFlag;
     char str[256];
     int u_or_g=0;
-    int i;
+//    int i;
     base=ptr;
     end=strstr(ptr,"\n");
     *end='\0';
