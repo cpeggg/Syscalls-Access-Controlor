@@ -14,7 +14,7 @@
 #include <linux/fs_struct.h>
 #include <linux/fdtable.h>
 
-#define CONTROLSTR "USER's SECRET"
+#define CONTROLSTR "USER_SECRET"
 #define IOTEST "/tmp/ioTest"
 #define CREATEST "/tmp/creatTest"
 #define EXECTEST "/tmp/execTest"

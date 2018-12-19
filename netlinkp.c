@@ -10,7 +10,7 @@
 #define NETLINK_TEST 29
 #define AUDITPATH "/root/TestAudit"
 #define AUDITCREATPATH "/root/TestAuditCreat"
-#define CONTENTAUDIT "USER's SECRET"
+#define CONTENTAUDIT "USER_SECRET"
 #define MAX_LENGTH 256
 static u32 pid=0;
 static struct sock *nl_sk = NULL;

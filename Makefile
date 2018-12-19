@@ -9,7 +9,7 @@ default:
 	gcc -Wno-nonnull test.c -o syscall_test
 	gcc execTest.c -o execTest
 	chmod 111 execTest
-	echo "USER's SECRET" > /tmp/ioTest
+	echo "USER_SECRET" > /tmp/ioTest
 	chmod 666 /tmp/ioTest
 	mv -f execTest /tmp/
 

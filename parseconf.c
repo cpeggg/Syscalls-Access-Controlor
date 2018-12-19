@@ -48,7 +48,7 @@ int parse(char* ptr){
     unsigned int id,syscall,fpFlag;
     char str[256];
     int u_or_g=0;
-//    int i;
+    int i;
     base=ptr;
     end=strstr(ptr,"\n");
     *end='\0';
@@ -66,8 +66,10 @@ int parse(char* ptr){
         if (*base=='\0')
             break;
         if (4!=sscanf(base,"%u %u %u %256s",&id,&syscall,&fpFlag,str)){
-            if (strstr(base,"groups ac"))
+            if (strstr(base,"groups ac")){
                 u_or_g=1;
+                continue;
+            }
             else if (!strstr(base,"#")){
                 userTop=0;
                 groupTop=0;
@@ -88,12 +90,12 @@ int parse(char* ptr){
             strncpy(groups[groupTop++].string,str,256);
         }
     }while (end);
-    /*
+    printk("USER:");
     for (i=0;i<userTop;i++)
-        printk("%u %u %u %256s",users[i].id,users[i].syscall, users[i].fpFlag, users[i].string);
+        printk("%u %u %u %s",users[i].id,users[i].syscall, users[i].fpFlag, users[i].string);
+    printk("GROUPS:");
     for (i=0;i<groupTop;i++)
-        printk("%u %u %u %256s",groups[i].id,groups[i].syscall,groups[i].fpFlag,groups[i].string);
-    */
+        printk("%u %u %u %s",groups[i].id,groups[i].syscall,groups[i].fpFlag,groups[i].string);
     return 0;
 }
 int parsemain(const char *path){
