@@ -12,15 +12,13 @@
 #include <linux/buffer_head.h>
 struct accesscontrolList{
     struct accesscontrolList* next;
-    unsigned int id;
+    char programname[256];
     unsigned int syscall;
     unsigned int fpFlag;
     char string[256];
 };
-struct accesscontrolList users[256]={0};
-unsigned int userTop=0;
-struct accesscontrolList groups[256]={0};
-unsigned int groupTop=0;
+struct accesscontrolList programs[256]={0};
+unsigned int programTop=0;
 int read_conf(const char *path, char* filecontent) 
 {
     struct file *filp = NULL;
@@ -45,16 +43,16 @@ int read_conf(const char *path, char* filecontent)
 }
 int parse(char* ptr){
     char* base, *end;
-    unsigned int id,syscall,fpFlag;
+    unsigned int syscall,fpFlag;
+    char id[256];
     char str[256];
-    int u_or_g=0;
     int i;
     base=ptr;
     end=strstr(ptr,"\n");
     *end='\0';
     ptr=end+1;
     //printk("parse: %s",base);
-    if (!strstr(base,"users ac"))
+    if (!strstr(base,"Access Control Configuration File"))
         return -2;
     do {
         base=ptr;
@@ -65,37 +63,21 @@ int parse(char* ptr){
         //printk("parse: %s",base);
         if (*base=='\0')
             break;
-        if (4!=sscanf(base,"%u %u %u %256s",&id,&syscall,&fpFlag,str)){
-            if (strstr(base,"groups ac")){
-                u_or_g=1;
-                continue;
-            }
-            else if (!strstr(base,"#")){
-                userTop=0;
-                groupTop=0;
+        if (4!=sscanf(base,"%256s %u %u %256s",id,&syscall,&fpFlag,str)){
+            if (!strstr(base,"#")){
+                programTop=0;
                 return -2;
             }
             else continue;
         }
-        if (u_or_g==0){
-            users[userTop].id=id;
-            users[userTop].syscall=syscall;
-            users[userTop].fpFlag=fpFlag;
-            strncpy(users[userTop++].string,str,256);
-        }
-        else{
-            groups[groupTop].id=id;
-            groups[groupTop].syscall=syscall;
-            groups[groupTop].fpFlag=fpFlag;
-            strncpy(groups[groupTop++].string,str,256);
-        }
+        strncpy(programs[programTop].programname,id,256);
+        programs[programTop].syscall=syscall;
+        programs[programTop].fpFlag=fpFlag;
+        strncpy(programs[programTop++].string,str,256);
     }while (end);
-    printk("USER:");
-    for (i=0;i<userTop;i++)
-        printk("%u %u %u %s",users[i].id,users[i].syscall, users[i].fpFlag, users[i].string);
-    printk("GROUPS:");
-    for (i=0;i<groupTop;i++)
-        printk("%u %u %u %s",groups[i].id,groups[i].syscall,groups[i].fpFlag,groups[i].string);
+    printk("PROGRAMS:");
+    for (i=0;i<programTop;i++)
+        printk("%s %u %u %s",programs[i].programname,programs[i].syscall, programs[i].fpFlag, programs[i].string);
     return 0;
 }
 int parsemain(const char *path){

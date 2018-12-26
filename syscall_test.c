@@ -12,20 +12,23 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
+#include <string.h>
 #define IOTEST "/tmp/ioTest"
 #define EXECTEST "/tmp/execTest"
 #define CREATEST "/tmp/creatTest"
 int main(int argc, char*argv[], char *envp[]){
     int fd,creatfd,execret;
     char buf[0x20];
+    char strProcessPath[1024]={0};
+    char* strProcessName;
     printf("\n----------------SYSCALL TEST----------------\n");
     printf("---------------PERSONAL INFO----------------\n");
-    printf("UID:%d\t\tGID:%d\t\t\n",getuid(),getgid());
-    printf("USERNAME:%s\t\tGROUPNAME:%s\t\t\n",getpwuid(getuid())->pw_name,getgrgid(getgid())->gr_name);
+	if(readlink("/proc/self/exe", strProcessPath,1024) <=0)
+        return -1;
+	strProcessName = strrchr(strProcessPath, '/');
+    printf("Current Process Name: %s\n",++strProcessName);
     printf("------------------IO TEST-------------------\n");
 
-    printf("[DEBUG] umask to 0, previous: %o\n",umask(0000));
-    printf("[DEBUG] umask to 0, previous: %o\n",umask(0000));
     fd = open(IOTEST,O_RDWR|O_CREAT, 0777);
     if (fd<0)
         puts("open failed");
