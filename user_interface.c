@@ -96,9 +96,9 @@ void writeback(char* path){
 }
 char* stringg(int syscall){
     switch (syscall){
-        case __NR_open:
-        case __NR_read:return "Audit content";
         case __NR_write:
+        case __NR_read:return "Audit content";
+        case __NR_open:
         case __NR_execve:
         case __NR_creat:return "Audit path";
         default: puts("syscall error");return NULL;
@@ -143,8 +143,19 @@ void Show(){
         printf("\t%s: %s\n", stringg(programs[i].syscall), programs[i].string);
     }
 }
+void DeletePolicy(int index){
+    int i;
+    for (i=index;i<programTop;i++){
+        strcpy(programs[i].programname,programs[i+1].programname);
+        programs[i].syscall=programs[i+1].syscall;
+        programs[i].fpFlag=programs[i+1].fpFlag;
+        strcpy(programs[i].string,programs[i+1].string);
+    }
+    programTop--;
+}
 void Add(){
     char buf[0x20];
+    int i;
     if (programTop>255) {puts("Policy pool full.");return;}
     puts("Input the Program Name:");
     scanf("%256s",programs[programTop].programname);
@@ -154,8 +165,15 @@ void Add(){
     puts("Is it permitted or forbiddened?(p/f)");
     scanf("%20s",buf);
     programs[programTop].fpFlag=StrtofpFlag(buf);
-    printf("Input the %s:\n",stringg(programs[programTop].syscall));
-    scanf("%256s",programs[programTop++].string);
+    printf("Do you want to add %s?(y/n, n for all)",stringg(programs[programTop].syscall));
+    scanf("%20s",buf);
+    if (buf[0]=='y'||buf[0]=='Y'){
+        printf("Input the %s:\n",stringg(programs[programTop].syscall));
+        scanf("%256s",programs[programTop++].string);
+    }
+    else{
+        strcpy(programs[programTop++].string,"(All)");
+    }
 }
 void Delete(){
     char buf[0x10];
@@ -168,13 +186,7 @@ void Delete(){
             break;
         printf("Invalid Index");
     }while(1);
-    for (i=index;i<programTop;i++){
-        strcpy(programs[i].programname,programs[i+1].programname);
-        programs[i].syscall=programs[i+1].syscall;
-        programs[i].fpFlag=programs[i+1].fpFlag;
-        strcpy(programs[i].string,programs[i+1].string);
-    }
-    programTop--;
+    DeletePolicy(index);
 }
 int main(){
     char buf[0x10];

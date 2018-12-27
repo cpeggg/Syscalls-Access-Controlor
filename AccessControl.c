@@ -31,27 +31,24 @@ extern struct accesscontrolList programs[256];
 extern unsigned int programTop;
 int getAC(unsigned int syscall, unsigned int *flag, const char* filename){
     int i;
+    int ret=0;
     char fullname[256]={0};
     *flag=0;
-    if (strstr(current->comm,"syscall_test")){
-        printk("===");
-        printk("%s %d %s",current->comm,syscall,filename);
-        for (i=0;i<programTop;i++)
-            printk("%s %u %u %s",programs[i].programname, programs[i].syscall, programs[i].fpFlag, programs[i].string);
-    }
     for (i=0;i<programTop;i++){
         if (programs[i].syscall==syscall && !strcmp(current->comm,programs[i].programname)){
             get_fullname(filename, fullname);
-            if (strstr(fullname, programs[i].string)){
-                printk("---");
-                printk("%s",current->comm);
-                printk("%s %u %u %s",programs[i].programname, programs[i].syscall, programs[i].fpFlag, programs[i].string);
+            if (!strcmp(programs[i].string,"(All)") || strstr(fullname, programs[i].string)){
                 *flag=1;
                 return programs[i].fpFlag-1;
             }
         }
+        if (programs[i].fpFlag==1&&!strcmp(current->comm,programs[i].programname)){
+            printk("%s",current->comm);
+            *flag=1;
+            ret=-1;
+        }
     }
-    return 0;
+    return ret;
 }
 int ACRead(int fd, void *buf, size_t count){
     int ret, hasresult;

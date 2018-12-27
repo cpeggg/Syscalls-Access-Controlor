@@ -1,9 +1,9 @@
 #!/bin/bash
 echo 本shell脚本用于测试Access Control及Access Audit的功能
 echo 首先拷贝动态权限的配置文件至/root，表示该配置文件只能由系统的根用户创建并修改，内核模块读取的也是该文件
-sudo cp ./AccessControl.conf /root/
-sudo chown root /root/AccessControl.conf
-sudo chmod 644 /root/AccessControl.conf
+#sudo cp ./AccessControl.conf /root/
+#sudo chown root /root/AccessControl.conf
+#sudo chmod 644 /root/AccessControl.conf
 
 gcc -Wno-nonnull syscall_test.c -o syscall_test1
 gcc -Wno-nonnull syscall_test.c -o syscall_test2
