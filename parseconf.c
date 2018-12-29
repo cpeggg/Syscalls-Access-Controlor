@@ -11,7 +11,6 @@
 #include <linux/slab.h>
 #include <linux/buffer_head.h>
 struct accesscontrolList{
-    struct accesscontrolList* next;
     char programname[256];
     unsigned int syscall;
     unsigned int fpFlag;

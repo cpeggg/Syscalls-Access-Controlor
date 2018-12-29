@@ -190,6 +190,7 @@ static int __init audit_init(void)
 	
     //Initialize netlink
     netlink_init();
+    //Parse Configuration File
     parseret = parsemain("/root/AccessControl.conf");
     if (parseret == -1)
         printk("Configure file not found.\n");

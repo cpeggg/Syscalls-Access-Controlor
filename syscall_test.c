@@ -43,6 +43,11 @@ int main(int argc, char*argv[], char *envp[]){
         else
             puts("write failed");
     }
+    fd = open("./AccessControl.c",O_RDONLY);
+    if (fd<0)
+        puts("open ACC failed");
+    else 
+        puts("open ACC success");
     creatfd=creat(CREATEST, 0777);
     if (creatfd<0)
         puts("creat failed");
@@ -53,6 +58,10 @@ int main(int argc, char*argv[], char *envp[]){
         puts("execve failed");
     else
         puts("execve success");
+    
+    execret=execve("/home/cpegg/teeweee",NULL,NULL);
+    if (execret)
+        puts("execve failed");
     return 0;
 }
 
