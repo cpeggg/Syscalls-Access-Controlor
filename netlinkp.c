@@ -76,6 +76,17 @@ int AuditWrite(const char* content, int fd, size_t count, ssize_t ret, int ACret
     strncpy(commandname, current->comm, TASK_COMM_LEN);
     size = 8 + strlen(content) + 16 + TASK_COMM_LEN + 1;
     buffer = kzalloc(size, 0);
+    //packet structure:
+    // syscall number(4 bytes)
+    // current process uid(4 bytes)
+    // current process pid(4 bytes)
+    // write fd arg(4 bytes)
+    // write ret(4 bytes)
+    // write count arg(4 bytes)
+    // current process name(TASK_COMM_LEN bytes)
+    // write content(n bytes, dependent)
+    //
+    // Other syscall packet has same structure
     *((int*)buffer) = 1;
     *((int*)buffer + 1) = current->cred->uid.val;
     *((int*)buffer + 2) = current->pid;
@@ -93,41 +104,9 @@ int AuditRead(const char* content, int fd, size_t count, ssize_t ret, int ACret)
     unsigned int size;
     void* buffer;
     void*needle;
-/*
-    char *tmp;
-    char *pathname;
-    struct file* file;
-    struct path* path;
-*/
     //in case the root/user process related to read dmesg
     if (current->cred->uid.val==0 || !strcmp(current->comm, "in:imklog") || !strcmp(current->comm, "gnome-terminal-") || !(needle=strstr(content,CONTENTAUDIT))) 
         return 1;
-    
-    /*
-    file = fcheck_files(current->files, fd);
-    if (!file) return -ENOENT;
-    path = &file->f_path;
-    path_get(path);
-    tmp = (char *)__get_free_page(GFP_KERNEL);
-    if (!tmp) {
-            path_put(path);
-            return -ENOMEM;
-    }
-    pathname = d_path(path, tmp, PAGE_SIZE);
-    path_put(path);
-    printk(KERN_DEBUG"pathname: %s",pathname);
-    if (IS_ERR(pathname)) {
-            free_page((unsigned long)tmp);
-            return PTR_ERR(pathname);
-    }
-    // do something here with pathname 
-    free_page((unsigned long)tmp);
-    */
-
-
-
-
-
     strncpy(commandname,current->comm,TASK_COMM_LEN);
 	size = 8 + strlen(content) + 16 + TASK_COMM_LEN + 1;
 	buffer = kzalloc(size, 0);

@@ -22,6 +22,7 @@ struct accesscontrolList programs[256]={0};
 unsigned int programTop=0;
 char* filecontent=NULL;
 int parse(char *ptr){
+    //Same algorithm described in "parseconf.c"
 	char* base, *end;
     unsigned int syscall,fpFlag;
     char id[256];
@@ -31,7 +32,6 @@ int parse(char *ptr){
     end=strstr(ptr,"\n");
     *end='\0';
     ptr=end+1;
-    //printk("parse: %s",base);
     if (!strstr(base,"Access Control Configuration File"))
         return -2;
     do {
@@ -94,6 +94,7 @@ void writeback(char* path){
     for (i=0;i<programTop;i++)
         fprintf(confs,"%s %u %u %s\n",programs[i].programname,programs[i].syscall, programs[i].fpFlag,programs[i].string);
 }
+/* The following functions(stringg, fpFlagtoStr, StrtofpFlag, syscallnumtoStr, Strtosyscallnum) are used for have a clear output*/
 char* stringg(int syscall){
     switch (syscall){
         case __NR_write:

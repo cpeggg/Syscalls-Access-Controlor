@@ -46,11 +46,12 @@ int parse(char* ptr){
     char id[256];
     char str[256];
     int i;
+    //start parsing, we use strstr to find each end of a line, and parse each line to our rule list
+    //base point to each line's start, and end point to each line's end
     base=ptr;
     end=strstr(ptr,"\n");
     *end='\0';
     ptr=end+1;
-    //printk("parse: %s",base);
     if (!strstr(base,"Access Control Configuration File"))
         return -2;
     do {
@@ -63,6 +64,7 @@ int parse(char* ptr){
         if (*base=='\0')
             break;
         if (4!=sscanf(base,"%256s %u %u %256s",id,&syscall,&fpFlag,str)){
+            // indicate parsing failure
             if (!strstr(base,"#")){
                 programTop=0;
                 return -2;
@@ -74,7 +76,8 @@ int parse(char* ptr){
         programs[programTop].fpFlag=fpFlag;
         strncpy(programs[programTop++].string,str,256);
     }while (end);
-    printk("PROGRAMS:");
+    // DEBUG: point out each rule that has been successfully parsed
+    printk(KERN_DEBUG"PROGRAMS:");
     for (i=0;i<programTop;i++)
         printk("%s %u %u %s",programs[i].programname,programs[i].syscall, programs[i].fpFlag, programs[i].string);
     return 0;
@@ -83,10 +86,12 @@ int parsemain(const char *path){
     char *filecontent=kzalloc(0x1000,GFP_ATOMIC);
     char *ptr=filecontent;
     int ret=-1;
+    //read the raw Configuration file data
     ret = read_conf(path, filecontent);
     //printk(KERN_DEBUG"filecontent: %s",filecontent);
     if (ret<0)
         return -1;
     else 
+        //if read success, parse the file content
         return parse(ptr);
 }

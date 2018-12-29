@@ -65,8 +65,9 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
 	strcpy(username,pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
+    //Here I use variable parameter so that it can process different args and their types
 	switch (syscall){
-    case 0:
+    case 0:// read
         fd = va_arg(pArgs, int);
         content = va_arg(pArgs, char*);
         count = va_arg(pArgs, int);
@@ -76,7 +77,7 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
         fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
         printf("%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
         break;	
-    case 1:
+    case 1:// write
         fd = va_arg(pArgs, int);
         content = va_arg(pArgs, char*);
         count = va_arg(pArgs, int);
@@ -86,7 +87,7 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
         fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
         printf("%s(%d) %s(%d) %s \"%s\" %d %s\n",username,uid,commandname,pid,logtime,content,count, openresult);
         break;
-    case 2:
+    case 2:// open
         file_path = va_arg(pArgs, char*);
         flags = va_arg(pArgs, int); 
         ret = va_arg(pArgs, int);
@@ -98,7 +99,7 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
         fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
         printf("%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
         break;
-    case 59:
+    case 59:// execve
         execve_path = va_arg(pArgs, char*);
         ret = va_arg(pArgs, int);
         if (ret > 0) strcpy(openresult,"success");
@@ -106,7 +107,7 @@ void Log(char *commandname,int uid, int pid, int syscall, ...)//char *file_path,
 		fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %s\n",username,uid,commandname,pid,logtime,execve_path, openresult);
         printf("%s(%d) %s(%d) %s \"%s\" %s\n",username,uid,commandname,pid,logtime,execve_path, openresult);	
         break;
-    case 85:
+    case 85:// creat
         file_path = va_arg(pArgs, char*);
         mode = va_arg(pArgs, int);
         ret = va_arg(pArgs, int);
@@ -175,6 +176,7 @@ void LogRead(struct nlmsghdr *nlh){
     unsigned int uid, pid, ret, count,fd;
     char* content;
     char* commandname;
+    // extract the following audit message from the packet
     uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh)  );
     pid = *( 2 + (int *)NLMSG_DATA(nlh)   );
     fd = *(3 + (int *)NLMSG_DATA(nlh));
@@ -241,7 +243,6 @@ void LogCreat(struct nlmsghdr *nlh){
 
 int main(int argc, char *argv[]){
 	char buff[110];
-	//void killdeal_func();
 	char logpath[32];
 	if (argc == 1) strcpy(logpath,"./log");
 	else if (argc == 2) strncpy(logpath, argv[1],32);
@@ -250,9 +251,11 @@ int main(int argc, char *argv[]){
 		exit(1);
 	}
 	
-
+    // register 2 function to deal with SIGKILL and SIGINT, which may be 2 exiting signal in deamon / commandline mode
 	signal(SIGTERM,killdeal_func);
     signal(SIGINT,intdeal_func);
+
+
 	sock_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_TEST);
     nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
     memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
@@ -272,6 +275,7 @@ int main(int argc, char *argv[]){
 		char * commandname;
         int syscall=-1;
 		recvmsg(sock_fd, &msg, 0);
+        //Here I alter the packet structure so that it can record the syscall number, refer to source file "netlinkp.c"
         syscall = *( (unsigned int *)NLMSG_DATA(nlh)  );
         switch (syscall){
             case 0:

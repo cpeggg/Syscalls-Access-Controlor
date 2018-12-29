@@ -20,6 +20,7 @@
 #define EXECTEST "/tmp/execTest"
 #define MAX_LENGTH 256
 extern void get_fullname(const char *pathname, char* fullname);
+
 struct accesscontrolList{
     struct accesscontrolList* next;
     char programname[256];
@@ -28,30 +29,30 @@ struct accesscontrolList{
     char string[256];
 };
 extern struct accesscontrolList programs[256];
-extern unsigned int programTop;
+extern unsigned int programTop;//indicate the amount of rules stored in memory
+
 int getAC(unsigned int syscall, unsigned int *flag, const char* filename){
     int i;
     int ret=0;
     char fullname[256]={0};
     *flag=0;
+    // go through every rules
     for (i=0;i<programTop;i++){
+        //Check 1: syscall and programname
         if (programs[i].syscall==syscall && !strcmp(current->comm,programs[i].programname)){
             get_fullname(filename, fullname);
+            //Check 2:String compare
             if (!strcmp(programs[i].string,"(All)") || strstr(fullname, programs[i].string)){
                 *flag=1;
-                return programs[i].fpFlag-1;
+                return programs[i].fpFlag-1;//Since we store 0/1 in memory to indicate p and f, however this function return -1 as f and 0 as p, so we minus 1 as result
             }
-        }
-        if (programs[i].fpFlag==1&&!strcmp(current->comm,programs[i].programname)){
-            printk("%s",current->comm);
-            *flag=1;
-            ret=-1;
         }
     }
     return ret;
 }
 int ACRead(int fd, void *buf, size_t count){
     int ret, hasresult;
+    // If there has rules, go check it, else permission as result
     if (programTop>0){
         ret = getAC(0, &hasresult, buf);
         if (hasresult) return ret;

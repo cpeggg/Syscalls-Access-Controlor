@@ -95,7 +95,9 @@ asmlinkage ssize_t hook_write(int fd, const void *buf, size_t count){
     void *bufferSDTHook=kzalloc(count,GFP_ATOMIC);
     ssize_t ret;
     int ACret=0;
+    // To secure from crash (SMAP protect)
     copy_from_user(bufferSDTHook, buf, count);
+    // Time for access control, the ret=0 indicate that it is approved, else is prohibited
     ACret = ACWrite(fd, bufferSDTHook, count);
     if (ACret)
         ret = -1;
@@ -209,6 +211,7 @@ static void __exit audit_exit(void)
 #else
     unsigned long orig_cr0;
 #endif
+    //restore the original syscalls
     orig_cr0 = clear_and_return_cr0();
     sys_call_table[__NR_open] = (unsigned long)orig_open;
     sys_call_table[__NR_read] = (unsigned long)orig_read;
@@ -217,6 +220,7 @@ static void __exit audit_exit(void)
     sys_call_table[__NR_creat] = (unsigned long)orig_creat;
     
     setback_cr0(orig_cr0);
+    //release netlink
  	netlink_release();  	
     printk(KERN_INFO "Module exit.\n");
 }
