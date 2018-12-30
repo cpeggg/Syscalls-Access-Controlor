@@ -21,9 +21,9 @@ Here we write a default configuration file and you can just run the shell script
 ```bash
 ./test.sh
 ```
-If you want then alter the config, run the user interface program:
+If you want then alter the config, run the user interface program (This requires root privilege since the policy can only be alter by system administrator):
 ```bash
-./user_interface
+sudo ./user_interface
 ```
 If you want to run the audit deamon, open another terminal in the same path and run:
 ```bash
