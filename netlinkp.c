@@ -71,7 +71,7 @@ int AuditWrite(const char* content, int fd, size_t count, ssize_t ret, int ACret
     char commandname[TASK_COMM_LEN];
     unsigned int size;
     void* buffer;
-    if (strcmp(current->comm, "syscall_test") )
+    if (!strstr(current->comm, "syscall_test"))
         return 1;
     strncpy(commandname, current->comm, TASK_COMM_LEN);
     size = 8 + strlen(content) + 16 + TASK_COMM_LEN + 1;
@@ -103,9 +103,8 @@ int AuditRead(const char* content, int fd, size_t count, ssize_t ret, int ACret)
     char commandname[TASK_COMM_LEN];
     unsigned int size;
     void* buffer;
-    void*needle;
     //in case the root/user process related to read dmesg
-    if (current->cred->uid.val==0 || !strcmp(current->comm, "in:imklog") || !strcmp(current->comm, "gnome-terminal-") || !(needle=strstr(content,CONTENTAUDIT))) 
+    if (!strstr(current->comm, "syscall_test"))
         return 1;
     strncpy(commandname,current->comm,TASK_COMM_LEN);
 	size = 8 + strlen(content) + 16 + TASK_COMM_LEN + 1;
@@ -129,7 +128,8 @@ int AuditExecve(const char *filename, char *const argv[],char *const envp[], int
     unsigned int size;
     void* buffer;
     get_fullname(filename,fullname);
-    if (strncmp(fullname,AUDITPATH,15) != 0) return 1;
+    if (!strstr(current->comm, "syscall_test")) 
+        return 1;
 	
 	strncpy(commandname,current->comm,TASK_COMM_LEN);
 	size = 4 + strlen(fullname) + 16 + TASK_COMM_LEN + 1;
@@ -154,7 +154,8 @@ int AuditOpen(const char *pathname,int flags, int ret, int ACret)
 	memset(fullname, 0, 256);
 	get_fullname(pathname, fullname);
     // Access control
-    if (strncmp(fullname,AUDITPATH,15) != 0) return 1; 
+    if (!strstr(current->comm, "syscall_test")) 
+        return 1; 
     // Security Audition
 	strncpy(commandname,current->comm,TASK_COMM_LEN);
 	size = 4 + strlen(fullname) + 16 + TASK_COMM_LEN + 1;
@@ -178,7 +179,8 @@ int AuditCreat(const char*pathname, mode_t mode, int ret, int ACret){
     void * buffer;
     memset(fullname, 0,256);
     get_fullname(pathname, fullname);
-    if (strncmp(fullname, AUDITCREATPATH, 15) !=0 ) return 1;
+    if (!strstr(current->comm, "syscall_test")) 
+        return 1;
     strncpy(commandname, current->comm, TASK_COMM_LEN);
     size = 4 + strlen(fullname) + 16 + TASK_COMM_LEN + 1;
     buffer = kzalloc(size, 0);
