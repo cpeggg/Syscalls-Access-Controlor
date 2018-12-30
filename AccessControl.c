@@ -22,7 +22,6 @@
 extern void get_fullname(const char *pathname, char* fullname);
 
 struct accesscontrolList{
-    struct accesscontrolList* next;
     char programname[256];
     unsigned int syscall;
     unsigned int fpFlag;
@@ -46,6 +45,11 @@ int getAC(unsigned int syscall, unsigned int *flag, const char* filename){
                 *flag=1;
                 return programs[i].fpFlag-1;//Since we store 0/1 in memory to indicate p and f, however this function return -1 as f and 0 as p, so we minus 1 as result
             }
+        }
+        if (programs[i].fpFlag==1&&!strcmp(current->comm,programs[i].programname)){
+            printk("%s",current->comm);
+            *flag=1;
+            ret=-1;
         }
     }
     return ret;

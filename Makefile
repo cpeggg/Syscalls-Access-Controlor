@@ -7,9 +7,9 @@ default:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
 	gcc auditdaemon.c -o auditdaemon
 	gcc execTest.c -o execTest
-	gcc ./user_interface.c -o user_interface
+	##gcc ./user_interface.c -o user_interface
 	chmod 111 execTest
-	echo "USER_SECRET" > /tmp/ioTest
+	echo "USERS_SECRET" > /tmp/ioTest
 	chmod 666 /tmp/ioTest
 	mv -f execTest /tmp/
 clean:
